@@ -20,10 +20,12 @@ build and install them:
 ```bash
 $ git submodule init
 $ git submodule update
+$ cd tpm-quote-tools
 $ autoreconf -i
 $ ./configure
 $ make
 $ make install
+$ cd ..
 ```
 Enable the TPM in the BIOS and then take ownership using **tpm_takeownership**.
 Then proceed to make the AIK using the following commands from the
@@ -48,6 +50,20 @@ information (DNS hostname, AIK public cert, the corresponding hash,
 **Importantly**, you must register before installing the IMA policy.
 Note, that when you run the verify script in the next section, you should use
 the hostname rather than the IP address.
+
+Finally, we can set up the required integrity measurement policy.
+The policy checks loaded executable files (programs,
+shared libraries and executable files).
+This should typically be written to ```/etc/ima/ima-policy```,
+but it depends on your platform.
+The systemd init system should load it automatically if it exists.
+
+```
+measure func=BPRM_CHECK
+measure func=FILE_MMAP mask=MAY_EXEC
+```
+This example policy is known as a binary attestation policy, but 
+other types of policy are possible to some degree.
 
 ## Remote Attestation Scripts
 * verify.sh is the requester; its job is to fetch and analyse quotes and
@@ -98,15 +114,3 @@ In the event of the verifier never reaching the line confirming the quote,
 the requester would deem the machine as untrustworthy,
 and simply stop the process.
 
-## Binary attestation policy for IMA
-
-The supported policy checks loaded executable files (programs,
-shared libraries and executable files).
-This should typically be written to ```/etc/ima/ima-policy```,
-but it depends on your platform.
-The systemd init system should load it automatically if it exists.
-
-```
-measure func=BPRM_CHECK
-measure func=FILE_MMAP mask=MAY_EXEC
-```
