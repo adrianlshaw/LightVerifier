@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # (c) Copyright 2016-2017 Hewlett Packard Enterprise Development LP
 #
@@ -15,15 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Authors:	Victor Sallard
-#		Adrian L. Shaw <adrianlshaw@acm.org>
+#		        Adrian L. Shaw <adrianlshaw@acm.org>
 #
-# LQS stands for Lightweight Quote Sender
 
 trap exitIt INT
 
 if [ $# -lt 4 ]
 then
-        echo "Usage : lqs.sh pubAIK uuidAIK port PCRS ..."
+        echo "Usage : ra-agent.sh <aik.pub> <aik.uuid> <port> <PCR numbers ...>"
         exit 1
 fi
 
@@ -71,12 +70,12 @@ mainRun(){
 
 	# Open netcat connection for listening
 	cat $FIFO | nc -q 0 -l $PARAM $PORT > $FILE &
-	 echo "Waiting for connection..."
+	echo "Waiting for connection..."
 	while ! [ -s $FILE ]
 	do
 		sleep 0.1
 	done
-	 echo "Connected"
+	echo "Connected"
 
 	# Spawn a new instance for the next connection
 	mainRun $PAIK $UUID $PORT $PCRS &
@@ -87,13 +86,14 @@ mainRun(){
 	# Store line count for diff transfer
 	LINE=$(cat $FILE | cut -d " " -f 2)
 
-	# Compute the quote with received nonce, but only after everyone has finished with tpm_getquote
+	# Compute the quote with received nonce, but only after everyone
+  # has finished with tpm_getquote.
 	# Mutex prevents parallel execution of tpm_getquote
-	 echo "Computing quote..."
+	echo "Computing quote..."
 	flock /var/lock/tmp_quote_sender tpm_getquote $UUID $NONCE $QUOTE $PCRS
-	 echo "Done"
+	echo "Done"
 
-	 echo "Formatting..."
+	echo "Formatting..."
 	# Base64 encoding of the quote (to avoid getting stray EOF everywhere)
 	B64=$(base64 $QUOTE)
 
@@ -112,7 +112,7 @@ mainRun(){
 	echo "##IMA ASCII log file##" >> $OUTFILE
 	echo "$IMA" >> $OUTFILE
 
-	 echo "Ready to send !"
+	echo "Ready to send!"
 
 	# Send the file through the pipe
 	cat $OUTFILE > $FIFO

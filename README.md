@@ -73,10 +73,11 @@ $ ./verify.sh <hostname> <port>
 ```
 If successful, it will generate a file called report.log.
 
-* lqs.sh is the sender; it waits for a signal to generate a quote and send it.
-This runs on the platform to verify. You can run it with:
+* ra-agent.sh is run on the machine to be monitored; 
+it waits for a request from the verifier and sends both the log and TPM quote.
+You can run it with:
 ```bash
-$ ./lqs.sh <publicAIKcert> <AIKuuid> <port> 10
+$ ./ra-agent.sh <publicAIKcert> <AIKuuid> <port> 10
 ```
 
 ## How does it work
@@ -84,19 +85,19 @@ The aim of the project is to use both binary attestation and CVE databases to
 evaluate trust for a given machine.
 
 There are two parties:
-* The **verifier** - this machine runs _lqr.sh_ and contains the database
-* The **attestor** - this machine runs _lqs.sh_ and logs activity with IMA
+* The **verifier** - this machine runs _verify.sh_ and contains the database
+* The **attestor** - this machine runs _ra-agent.sh_ and logs activity with IMA
 
 First, the verifier should build the database from the measurementDB.
 This will store the SHA-1 hash of every ELF file in the
-packages in a Redis database.
+packages in a Redis database. We are working to add support 
+for newer hash algorithms.
 
-Secondly, the machine to verify should have IMA running (preferably in TCB mode
-to ensure the chain of trust isn't broken) and launch lqs.sh. This script will
-then wait for a request from the verifier and a new
+Secondly, the machine to verify should have IMA running and launch **ra-agent.sh**. 
+This script will then wait for a request from the verifier and a new
 instance will be created for each request.
 
-When the machine needs to be verified, the verifier sends a nonce for freshness.
+When the machine needs to be verified, the verifier sends a nonce/challenge for freshness.
 The sender will then create a quote (with the nonce used to prevent replay
 attacks) and sends it along with the IMA log (unencrypted)
 
