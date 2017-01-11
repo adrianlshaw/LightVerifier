@@ -9,6 +9,7 @@ The more advanced version is the information flow tracking that we've been
 researching (to reduce the number of
 measurements needed to check).
 
+This project consists of a client and server, which both need TPM tools.
 To set things up manually, we require the traditional Netcat package:
 
 ```bash
@@ -27,6 +28,16 @@ $ make
 $ make install
 $ cd ..
 ```
+Once this depedency is installed on both client and server, 
+you can start to install the LightVerifier tools.
+
+### Manual server side deployment
+
+Follow these instructions to set up the measurementDB:
+https://github.com/adrianlshaw/LightVerifier/blob/master/measurementDB/README.md
+
+### Manual client side deployment 
+
 Enable the TPM in the BIOS and then take ownership using **tpm_takeownership**.
 Then proceed to make the AIK using the following commands from the
 tpm-quote-tools package:
