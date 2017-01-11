@@ -1,0 +1,3 @@
+[submodule "tpm-quote-tools"]
+	path = tpm-quote-tools
+	url = git://git.code.sf.net/p/tpmquotetools/tpm-quote-tools
