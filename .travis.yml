@@ -1,10 +1,15 @@
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y netcat-traditional tpm-tools libtspi-dev git autoconf
-  - git clone git://git.code.sf.net/p/tpmquotetools/tpm-quote-tools && cd tpm-quote-tools && autoreconf -i && ./configure && make install && cd ..
+  - git clone git://git.code.sf.net/p/tpmquotetools/tpm-quote-tools
+  - cd tpm-quote-tools 
+  - autoreconf -i
+  - ./configure
+  - make install 
+  - cd ../tests/
 
 language: bash
-script: bash ra-agent.sh --testmode
+script: bash test-script.sh
 
 services:
   - redis-server
