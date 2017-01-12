@@ -5,10 +5,10 @@ before_install:
   - autoreconf -i
   - ./configure
   - sudo make install 
-  - cd ../tests/
+  - cd ..
 
 language: bash
-script: bash test-script.sh
+script: bash tests/test-script.sh
 
 services:
   - redis-server
