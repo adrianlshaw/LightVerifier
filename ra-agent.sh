@@ -15,14 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Authors:	Victor Sallard
-#		        Adrian L. Shaw <adrianlshaw@acm.org>
+#		Adrian L. Shaw <adrianlshaw@acm.org>
 #
 
 trap exitIt INT
 
 if [ $# -lt 4 ]
 then
-        echo "Usage : ra-agent.sh <aik.pub> <aik.uuid> <port> <PCR numbers ...>"
+        echo "Usage: ra-agent.sh <aik.pub> <aik.uuid> <port> <PCR numbers ...>"
         exit 1
 fi
 

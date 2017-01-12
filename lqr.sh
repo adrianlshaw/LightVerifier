@@ -45,12 +45,18 @@ if [ -z "$AIKDIR" ]; then
 	exit 1
 fi
 
+TESTMODE=0
 START=$(date +%s%N)
 
 if [ $# -lt 2 ]
 then
-        echo "Usage : lqr.sh address port"
+        echo "Usage: lqr.sh address port"
         exit 1
+else
+	if [ "$3" == "--testmode" ]
+	then
+		TESTMODE=1
+	fi
 fi
 
 # Make the temporary files
@@ -114,7 +120,13 @@ COUNT=$(cat "$AIKDIR/$HASHAIK/refLog" | wc -l)
 (( COUNT++ ))
 
 # Generate nonce
-openssl rand 20 > $NONCE
+if [ "$TESTMODE" -eq 1 ]
+then
+	echo "WARNING: Test mode activated, the nonce is zero, and therefore insecure"
+	dd if=/dev/zero bs=1 count=20 of=$NONCE
+else
+	openssl rand 20 > $NONCE
+fi
 
 # Add the line number after the nonce to only get the new log part
 SEND=$(echo "$(cat $NONCE | base64) $COUNT")
@@ -151,7 +163,6 @@ TRANSFER=$(date +%s%N)
 echo "Parsing quote"
 # Parse the file
 ./lfp.sh $AIK $QUOTE $LOG $FILE
-
 ## We need to verify the quote for every entry and see if one fits
 
 
@@ -187,11 +198,13 @@ QUOTESTART=$(date +%s%N)
 if [ $END -eq 0 ]
 then
 	tpm_verifyquote "$AIKDIR/$HASHAIK/pubAIK" $NEWHASH $NONCE $QUOTE 2>/dev/null
-
-	if [ $? -eq 0 ]
+	FAIL=$?
+	if [ $FAIL -eq 0 ]
 	then
 		#echo "Found"
 		TRUSTED=1
+	else
+		echo "tpm_verifyquote failed with $FAIL"
 	fi
 fi
 
@@ -211,7 +224,6 @@ do
 
 	if [ $? -eq 0 ]
 	then
-		#echo "Found"
 		TRUSTED=1
 		cp $NEWHASH "$AIKDIR/$HASHAIK/hashPCR"
 		cat "$AIKDIR/$HASHAIK/refLog" $LOG > $PUSH
@@ -221,7 +233,6 @@ do
 	fi
 	(( ITER++ ))
 done
-
 # Assess situation
 if [ $TRUSTED -eq 0 ]
 then
