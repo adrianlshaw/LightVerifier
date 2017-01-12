@@ -10,7 +10,7 @@ Vcs-Browser: https://github.com/adrianlshaw/lightverifier.git
 
 Package: lightverifier
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, bash
-Recommends: netcat-traditional, tpm-tools, libtspi-dev
+Depends: ${shlibs:Depends}, ${misc:Depends}, bash, netcat-traditional, tpm-tools, libtspi-dev
+Recommends: redis-tools
 Description: A lightweight set of remote attestation tools
   Allows a remote system to be continually monitored for unknown pieces of software. It is a hardware-based security solution that is dependent on the Trusted Platform Module (TPM) found in commodity computers.
