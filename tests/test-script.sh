@@ -14,10 +14,10 @@ redis-cli --raw -n 15 DEL "$HASHAIK"
 
 echo "Inserting golden measurements"
 
-redis-cli --raw -n 15 RPUSH "$HASHAIK" "$(cat tools/refLog | base64)"
-redis-cli --raw -n 15 RPUSH "$HASHAIK" "$(cat tools/hashPCR | base64)"
-redis-cli --raw -n 15 RPUSH "$HASHAIK" "$(cat tools/pcrValue | base64)"
-redis-cli --raw -n 15 RPUSH "$HASHAIK" "$(cat tools/pubAIK | base64)"
+redis-cli --raw -n 15 RPUSH "$HASHAIK" "$(cat tests/refLog | base64)"
+redis-cli --raw -n 15 RPUSH "$HASHAIK" "$(cat tests/hashPCR | base64)"
+redis-cli --raw -n 15 RPUSH "$HASHAIK" "$(cat tests/pcrValue | base64)"
+redis-cli --raw -n 15 RPUSH "$HASHAIK" "$(cat tests/pubAIK | base64)"
 
 echo "Done"
 
