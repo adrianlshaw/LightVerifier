@@ -2,7 +2,7 @@ Source: lightverifier
 Section: utils
 Priority: optional
 Maintainer: Adrian L. Shaw <adrianlshaw@acm.org>
-Build-Depends: debhelper (>=9) bash netcat-traditional tpm-tools libtspi-dev
+Build-Depends: debhelper (>=9)
 Standards-Version: 3.9.6
 Homepage: https://github.com/adrianlshaw/LightVerifier
 Vcs-Git: git://github.com/adrianlshaw/lightverifier.git
@@ -10,6 +10,7 @@ Vcs-Browser: https://github.com/adrianlshaw/lightverifier.git
 
 Package: lightverifier
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, bash
+Recommends: netcat-traditional, tpm-tools, libtspi-dev
 Description: A lightweight set of remote attestation tools
-  allow a remote system to be continually monitored for unknown pieces of software. It is a hardware-based security solution that is dependent on the Trusted Platform Module (TPM) found in commodity computers.
+  Allows a remote system to be continually monitored for unknown pieces of software. It is a hardware-based security solution that is dependent on the Trusted Platform Module (TPM) found in commodity computers.
