@@ -4,7 +4,7 @@ before_install:
   - cd tpm-quote-tools 
   - autoreconf -i
   - ./configure
-  - make install 
+  - sudo make install 
   - cd ../tests/
 
 language: bash
