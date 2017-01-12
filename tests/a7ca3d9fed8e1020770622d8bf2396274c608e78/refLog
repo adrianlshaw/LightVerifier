@@ -117,3 +117,8 @@
 10 558df773c8b288e8ba239dd88b42aa1f49ef0281 ima-ng sha1:a79e1853ef1c11f43b8333ecdec4a228ae59acc7 /home/labs/LightVerifier/lqr.sh
 10 9d5516db954bc48fd0a559dcac9db36d82e6b31c ima-ng sha1:25b014868954f54c42298edc80d080fa577fe7c3 /home/labs/LightVerifier/lqr.sh
 10 147a3c74cd22fbcf78355cf099e3a2aaf70f7f0a ima-ng sha1:7b64461061267e62f70efdfd31c8060f5946e801 /bin/dd
+10 1938cbb5276159844591a2a092dc020d42b978be ima-ng sha1:ac1b6c2b8dce23a708222da930f564231994f4f4 /usr/bin/git
+10 f668511f798850a1ee54cc33766bc3d19f06f9c1 ima-ng sha1:ac1b6c2b8dce23a708222da930f564231994f4f4 /usr/lib/git-core/git
+10 f3ec2110839dc1c34407d5c985f829b8f5ea0622 ima-ng sha1:706957e06674a2963dcc2f1dfaa6f2d416022c4d /bin/run-parts
+10 fb0f9ab83d98ea10822349e0e1faa555040941f1 ima-ng sha1:7ff294f1c5517cb9bfc8deb8b13a950d47e5ffb3 /home/labs/LightVerifier/ra-agent.sh
+10 af6ace3f16001019112450fc3b6cf57f86f7c6db ima-ng sha1:3309e0cda7088ec9f2a3a5599e18551b07c1ed47 /home/labs/LightVerifier/lqr.sh
