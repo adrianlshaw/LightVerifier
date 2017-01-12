@@ -14,24 +14,25 @@ redis-cli --raw -n 15 DEL "$HASHAIK"
 
 echo "Inserting golden measurements"
 
-cat refLog | base64 -e | redis-cli --raw -n 15 LINDEX "$HASHAIK" '0' 
-cat hashPCR | base64 -e | redis-cli --raw -n 15 LINDEX "$HASHAIK" '1'
-cat pcrValue | base64 -e | redis-cli --raw -n 15 LINDEX "$HASHAIK" '2'
-cat pubAIK | base64 -e | redis-cli --raw -n 15 LINDEX "$HASHAIK" '3'
+redis-cli --raw -n 15 RPUSH "$HASHAIK" "$(cat tools/refLog | base64)"
+redis-cli --raw -n 15 RPUSH "$HASHAIK" "$(cat tools/hashPCR | base64)"
+redis-cli --raw -n 15 RPUSH "$HASHAIK" "$(cat tools/pcrValue | base64)"
+redis-cli --raw -n 15 RPUSH "$HASHAIK" "$(cat tools/pubAIK | base64)"
 
 echo "Done"
 
 # Start the remote attestation agent
-./ra-agent.sh tests/a7ca3d9fed8e1020770622d8bf2396274c608e78/pubAIK --testmode 5000 10 &
+./ra-agent.sh tests/pubAIK --testmode 5000 10 &
 
 # Start the verification test
 AIKDIR=$PWD/tests ./lqr.sh localhost 5000 --testmode
 RESULT=$?
 
-sleep 2
+#sleep 2
 
-AIKDIR=$PWD/tests ./lqr.sh localhost 5000 --testmode
-RESULT2=$?
+#AIKDIR=$PWD/tests ./lqr.sh localhost 5000 --testmode
+#RESULT2=$?
 
 # End test
-exit $(($RESULT + $RESULT2))
+exit $RESULT
+#exit $(($RESULT + $RESULT2))
