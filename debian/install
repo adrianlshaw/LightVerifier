@@ -1,2 +1,8 @@
 ra-agent.sh usr/bin
 register.sh usr/bin
+verify.sh usr/bin
+lqr.sh usr/bin
+lfp.sh usr/bin
+debian/ima-policy etc/ima/
+debian/ra-agent.service etc/systemd/system/
+debian/start-ima.service etc/systemd/system/

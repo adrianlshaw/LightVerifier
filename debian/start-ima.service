@@ -1,0 +1,10 @@
+[Unit]
+Description=Remote attestation agent
+After=basic.target
+
+[Service]
+ExecStart=/bin/bash -c "chmod +r /sys/kernel/security/ima/ascii_runtime_measurements; cat /etc/ima/ima-policy > /sys/kernel/security/ima/ascii_runtime_measurements"
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

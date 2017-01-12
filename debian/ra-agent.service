@@ -1,0 +1,11 @@
+[Unit]
+Description=Remote attestation agent
+After=network.target
+
+[Service]
+User=nobody
+ExecStart=/usr/bin/ra-agent.sh
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
