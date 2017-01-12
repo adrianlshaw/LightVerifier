@@ -1,7 +1,10 @@
 #/bin/bash
+pkill ra-agent
+pkill lqr.sh
+pkill nc.traditional
 
 # Add "localhost" AIK to to the trust store
-#redis-cli --raw -n 13 set localhost a7ca3d9fed8e1020770622d8bf2396274c608e78
+redis-cli --raw -n 13 set "localhost" "a7ca3d9fed8e1020770622d8bf2396274c608e78"
 
 #redis-cli -h localhost -n 15 RPUSH "a7ca3d9fed8e1020770622d8bf2396274c608e78" "MTAgY2U4YmY0MTFhM2IzNWZjZmI0NTE3MjJmMTQyNzhlZGMzNmQxNDExZiBpbWEtbmcgc2hhMTpiNTI1MGVhNDZmNTFiMDUyMjVkM2FmMmU0MzY3ZTRmMWQwNzdmYzBmIGJvb3RfYWdncmVnYXRlCg=="
 #redis-cli -h localhost -n 15 RPUSH "a7ca3d9fed8e1020770622d8bf2396274c608e78" "ADZRVVQyLk499gAAAADCCEAAAAAAAP////8AAwAEAAG+m+JHRZ+NT2PnVhT9Xoy4F2KsSA=="
