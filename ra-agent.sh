@@ -15,15 +15,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Authors:	Victor Sallard
-#		        Adrian L. Shaw <adrianlshaw@acm.org>
+#		Adrian L. Shaw <adrianlshaw@acm.org>
 #
 
 trap exitIt INT
 
+TESTMODE=0
+
 if [ $# -lt 4 ]
 then
-        echo "Usage : ra-agent.sh <aik.pub> <aik.uuid> <port> <PCR numbers ...>"
-        exit 1
+        echo "Usage: ra-agent.sh <aik.pub> <aik.uuid> <port> <PCR numbers ...>"
+	exit 1
+else
+	if [ "$2" == "--testmode" ]
+	then
+		echo "WARNING: Test mode enabled"
+		TESTMODE=1
+	fi
 fi
 
 PGID=$(ps -o pgid= $$ | grep -o '[0-9]*')
@@ -87,18 +95,28 @@ mainRun(){
 	LINE=$(cat $FILE | cut -d " " -f 2)
 
 	# Compute the quote with received nonce, but only after everyone
-  # has finished with tpm_getquote.
+  	# has finished with tpm_getquote.
 	# Mutex prevents parallel execution of tpm_getquote
-	echo "Computing quote..."
-	flock /var/lock/tmp_quote_sender tpm_getquote $UUID $NONCE $QUOTE $PCRS
-	echo "Done"
+	if [ "$TESTMODE" -eq 0 ]
+	then
+		echo "Computing quote..."
+		flock /var/lock/tmp_quote_sender tpm_getquote $UUID $NONCE $QUOTE $PCRS
+		echo "Done"
 
-	echo "Formatting..."
+		echo "Formatting..."
+		# Fetch IMA measurements
+		IMA=$(tail -n +$LINE /sys/kernel/security/ima/ascii_runtime_measurements)
+	else
+		# If we are running with the --testmode flag then we 
+		# assume that the verifier is also running with the --testmode flag.
+		# Since there is no IMA or TPM in a CI service like Travis, then
+		# we use quotes we have prepared earlier...
+		cp tests/a7ca3d9fed8e1020770622d8bf2396274c608e78/client_test_quote $QUOTE
+		IMA=$(tail -n +$LINE tests/a7ca3d9fed8e1020770622d8bf2396274c608e78/client_test_log)
+	fi
+
 	# Base64 encoding of the quote (to avoid getting stray EOF everywhere)
 	B64=$(base64 $QUOTE)
-
-	# Fetch IMA measurements
-	IMA=$(tail -n +$LINE /sys/kernel/security/ima/ascii_runtime_measurements)
 
 	# Generate SHA1 of the public part of the AIK
 	HASH=$(sha1sum $PAIK | cut -d " " -f 1)

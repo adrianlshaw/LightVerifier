@@ -1,0 +1,17 @@
+sudo: required
+dist: jessie
+
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y netcat-traditional tpm-tools libtspi-dev git autoconf redis-server redis-tools 
+  - cd tpm-quote-tools 
+  - autoreconf -i
+  - ./configure
+  - sudo make install 
+  - cd ..
+
+language: bash
+script: bash tests/test-script.sh
+
+services:
+  - redis-server
