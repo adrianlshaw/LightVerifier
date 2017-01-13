@@ -1,3 +1,6 @@
+sudo: required
+dist: jessie
+
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y netcat-traditional tpm-tools libtspi-dev git autoconf
