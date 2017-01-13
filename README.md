@@ -10,10 +10,11 @@ researching (to reduce the number of
 measurements needed to check).
 
 This project consists of a client and server, which both need TPM tools.
-To set things up manually, we require the traditional Netcat package:
+To set things up manually on a Debian based system then
+we require the traditional Netcat package:
 
 ```bash
-$ apt-get install netcat-traditional tpm-tools libtspi-dev
+$ apt-get install netcat-traditional tpm-tools libtspi-dev redis-tools redis-server
 ```
 Fetch the TPM quote tools from the SourceForge website,
 build and install them:
