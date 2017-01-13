@@ -197,6 +197,7 @@ QUOTESTART=$(date +%s%N)
 # If the logs have the same size (may want to actually check the quote...)
 if [ $END -eq 0 ]
 then
+	echo "tpm_verifyquote params: $(cat $AIKDIR/$HASHAIK/pubAIK | base64) $(cat $NEWHASH | base64) $(cat $NONCE | base64) $(cat $QUOTE | base64)"
 	tpm_verifyquote "$AIKDIR/$HASHAIK/pubAIK" $NEWHASH $NONCE $QUOTE 2>/dev/null
 	FAIL=$?
 	if [ $FAIL -eq 0 ]
