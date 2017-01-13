@@ -123,7 +123,7 @@ COUNT=$(cat "$AIKDIR/$HASHAIK/refLog" | wc -l)
 if [ "$TESTMODE" -eq 1 ]
 then
 	echo "WARNING: Test mode activated, the nonce is zero, and therefore insecure"
-	dd if=/dev/zero bs=1 count=20 of=$NONCE
+	dd if=/dev/zero bs=1 count=20 of=$NONCE 2>/dev/null
 else
 	openssl rand 20 > $NONCE
 fi
@@ -368,12 +368,6 @@ echo "Format time : $(( ($FORMATEND - $FORMATSTART)/1000000 )) ms"
 
 echo "Total time : $(( ($FINISH - $START)/1000000 )) ms"
 
-rm $FILE
-rm $QUOTE
-rm $LOG
-rm $AIK
-rm $NEWHASH
-rm $PUSH
-rm $HASHCPY
+rm -rf $FILE $QUOTE $LOG $AIK $NEWHASH $PUSH $HASHCPY
 
 exit 0
