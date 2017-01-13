@@ -1,4 +1,4 @@
-# LightVerifier
+# LightVerifier [![Build Status](https://travis-ci.org/adrianlshaw/LightVerifier.svg?branch=master)](https://travis-ci.org/adrianlshaw/LightVerifier)
 
 A lightweight IMA agent and verification server that can be used for
 TPM-based remote attestation (as well as other roots of trust).
