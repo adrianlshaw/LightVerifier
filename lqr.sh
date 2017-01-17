@@ -41,7 +41,8 @@ make_term_normal(){
 }
 
 if [ -z "$AIKDIR" ]; then
-	echo "You haven't specified the AIKDIR directory"
+	echo "You haven't specified the AIKDIR shell variable."
+	echo "Please set it to a writeable directory, e.g. export AIKDIR=/tmp/"
 	exit 1
 fi
 
@@ -70,6 +71,7 @@ HASHCPY=$(mktemp)
 NONCE=$(mktemp)
 
 # Redis DB numbers
+REDIS_MEASUREMENTS=10
 REDIS_AIK=13
 REDIS_AIK_INFO=15
 
@@ -218,6 +220,14 @@ do
 	echo "10=$PCRVALUE" > $PUSH
 
 	tpm_updatepcrhash $HASHCPY $PUSH $NEWHASH
+	PCR_FAIL=$?
+	if [ $PCR_FAIL -gt 0 ]
+	then
+		echo "ERROR: Something went wrong when updating the PCR value ($PCR_FAIL)."
+		echo "File a bug on http://github.com/adrianlshaw/LightVerifier"
+		exit 5
+	fi
+
 	cp $NEWHASH $HASHCPY
 
 	tpm_verifyquote "$AIKDIR/$HASHAIK/pubAIK" $NEWHASH $NONCE $QUOTE 2>/dev/null
@@ -297,7 +307,10 @@ do
 	fi
 	fi
 
-	DBENTRIES=$(echo "$CONTENTRIES" | rev | cut -d " " -f 2 | rev | cut -d ":" -f 2 | xargs redis-cli --raw -n 10 mget | awk 'NF == 0 { print "@@@";next};{ print $0}')
+	DBENTRIES=$(echo "$CONTENTRIES" | rev | cut -d " " -f 2 | rev \
+		| cut -d ":" -f 2 | xargs redis-cli --raw -n $REDIS_MEASUREMENTS mget | \
+		awk 'NF == 0 { print "@@@";next};{ print $0}')
+
 	DBENT=$(echo "$DBENTRIES" | awk '$0 == "@@@" { next };{ print $0 }')
 	ENTRYCOUNT=$(echo "$CONTENTRIES" | wc -l)
 	VALIDCOUNT=$(echo "$DBENTRIES" | grep -c "@@@")
@@ -323,7 +336,8 @@ do
 	# Change termcolor to default colour
 	make_term_normal
 
-	PACKS=$(echo "$DBENT" | rev | cut -d "/" -f 1 | rev | cut -d "@" -f 2 | cut -d "_" -f 1,2 | sort -u)
+	PACKS=$(echo "$DBENT" | rev | cut -d "/" -f 1 | rev | \
+				cut -d "@" -f 2 | cut -d "_" -f 1,2 | sort -u)
 
 	echo
 	echo "List of detected vulnerable packages:"
