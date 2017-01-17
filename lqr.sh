@@ -206,7 +206,12 @@ then
 	then
 		TRUSTED=1
 	else
-		echo "tpm_verifyquote failed with $TPM_FAIL"
+		if [ ! -s $QUOTE ]
+		then
+			echo "ERROR: remote party sent a response which didn't include a quote"
+		fi
+		echo "ERROR: tpm_verifyquote failed with $TPM_FAIL"
+		exit 1
 	fi
 fi
 
@@ -317,8 +322,7 @@ do
 	VALIDCOUNT=$((ENTRYCOUNT-VALIDCOUNT))
 
 	make_term_green
-	echo 'Container ID :'
-	echo "$container"
+	echo 'Mount path ID: $container'
 	echo
 	make_term_normal
 	echo "$VALIDCOUNT/$ENTRYCOUNT binaries found in database"
