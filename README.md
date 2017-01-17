@@ -31,16 +31,54 @@ $ cd ..
 Once this depedency is installed on both client and server, 
 you can start to install the LightVerifier tools.
 
-### Manual server side deployment
+### Manually setting up the verifier's measurementDB
 
-Choose a trusted and secure server for deploying the verifier. Install dependencies:
+Choose a trusted and secure server for deploying the verifier. 
+Install the dependencies:
 
 ```bash
-$ apt-get install redis-server
+$ apt-get install redis-server redis-tools debmirror parallel
 ```
 
-Follow these instructions to set up the measurementDB on the verifier:
-https://github.com/adrianlshaw/LightVerifier/blob/master/measurementDB/README.md
+The measurementDB currently supports the creation of reference 
+measurements for a few Linux distributions, including:
+* Debian
+* Ubuntu 
+
+It would be nice to support a few LTS distributions, including 
+RH-like distributions like CentOS. Pull requests are welcome. 
+
+You can then run the builder for the reference database
+(note: it could take a day to download packages from scratch):
+```bash
+$ cd measurementDB && ./buildStore.sh
+```
+
+CVE reports for Debian are supported by LightVerifier. 
+You can make the CVE updater run frequently (e.g. every hour):
+```bash
+$ cp cve/* /etc/cron.hourly/
+```
+
+**Optional**: you can replicate an existing measurementDB database to another
+verifier's Redis instance by performing the following instructions.
+
+In **/etc/redis/redis.conf** on the main server add the following line to allow
+replication on all interfaces:
+```
+bind 0.0.0.0
+```
+
+In **/etc/redis/redis.conf** on the new slave add the hostname and port of the
+master database, e.g.:
+
+```
+slaveof <your_master_ip_or_hostname> 6379
+```
+
+**Important note:** the database can only be set to one distro at a time.
+The current default is Debian. To change this to another distro, change the
+"DISTRO" variable in **downloadDeb.sh** and rerun the **buildstore.sh** script.
 
 ### Installing the remote attestation client
 
