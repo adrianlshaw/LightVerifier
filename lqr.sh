@@ -50,7 +50,7 @@ START=$(date +%s%N)
 
 if [ $# -lt 2 ]
 then
-        echo "Usage: lqr.sh address port"
+        echo "Usage: lqr.sh <hostname> <port>"
         exit 1
 else
 	if [ "$3" == "--testmode" ]
@@ -69,49 +69,54 @@ PUSH=$(mktemp)
 HASHCPY=$(mktemp)
 NONCE=$(mktemp)
 
-# Get AIK from redis
+# Redis DB numbers
+REDIS_AIK=13
+REDIS_AIK_INFO=15
 
-HASHAIK=$(redis-cli --raw -n 13 get "$1")
+# Get AIK from redis based on the hostname
+HASHAIK=$(redis-cli --raw -n $REDIS_AIK get "$1")
 
 if [ ! -d "$AIKDIR/$HASHAIK" ]
 then
-	EXISTS=$(redis-cli --raw -n 15 exists "$HASHAIK")
+	EXISTS=$(redis-cli --raw -n $REDIS_AIK_INFO exists "$HASHAIK")
 	if [ $EXISTS -eq 1 ]
 	then
 		mkdir "$AIKDIR/$HASHAIK"
 	else
-		echo "The machine isn't part of the verifier's pool, aborting..."
+		echo "This hostname isn't known to the verifier. Aborting..."
 		exit 3
 	fi
 fi
 
-# Check if files are here, otherwise get them from the DB
-
+# Check if files are already cached, otherwise get them from Redis
 if [ ! -f "$AIKDIR/$HASHAIK/refLog" ]
 then
-	redis-cli --raw -n 15 LINDEX "$HASHAIK" '0' | base64 -d > "$AIKDIR/$HASHAIK/refLog"
+	redis-cli --raw -n $REDIS_AIK_INFO LINDEX "$HASHAIK" '0' | base64 -d > "$AIKDIR/$HASHAIK/refLog"
 fi
 
 if [ ! -f "$AIKDIR/$HASHAIK/hashPCR" ]
 then
-	redis-cli --raw -n 15 LINDEX "$HASHAIK" '1' | base64 -d > "$AIKDIR/$HASHAIK/hashPCR"
+	redis-cli --raw -n $REDIS_AIK_INFO LINDEX "$HASHAIK" '1' | base64 -d > "$AIKDIR/$HASHAIK/hashPCR"
 fi
 
 if [ ! -f "$AIKDIR/$HASHAIK/pcrValue" ]
 then
-	redis-cli --raw -n 15 LINDEX "$HASHAIK" '2' | base64 -d > "$AIKDIR/$HASHAIK/pcrValue"
+	redis-cli --raw -n $REDIS_AIK_INFO LINDEX "$HASHAIK" '2' | base64 -d > "$AIKDIR/$HASHAIK/pcrValue"
 fi
 
 if [ ! -f "$AIKDIR/$HASHAIK/pubAIK" ]
 then
-        redis-cli --raw -n 15 LINDEX "$HASHAIK" '3' | base64 -d > "$AIKDIR/$HASHAIK/pubAIK"
+  redis-cli --raw -n $REDIS_AIK_INFO LINDEX "$HASHAIK" '3' | base64 -d > "$AIKDIR/$HASHAIK/pubAIK"
 fi
 
+# Throw an error if we don't have all the right information.
 expected=$(ls -l "$AIKDIR/$HASHAIK" | wc -l)
 if [ $expected -lt 4 ]
 then
+	make_term_red
 	echo "There seems to be some information missing about the machine"
 	echo "Please check that the registration process was successful"
+	make_term_normal
 	exit 10
 fi
 
@@ -141,7 +146,7 @@ then
 fi
 
 RETRY=5
-# Request the quote/log file
+# Request the quote and the log file
 echo "$SEND" | nc.traditional $PARAM $1 $2 > $FILE
 
 while [ $? -ne 0 ]
@@ -163,8 +168,6 @@ TRANSFER=$(date +%s%N)
 echo "Parsing quote"
 # Parse the file
 ./lfp.sh $AIK $QUOTE $LOG $FILE
-## We need to verify the quote for every entry and see if one fits
-
 
 # Get received log line count
 END=$(wc -l $LOG | cut -d " " -f 1)
@@ -172,28 +175,18 @@ END=$(wc -l $LOG | cut -d " " -f 1)
 TRUSTED=0
 cp "$AIKDIR/$HASHAIK/hashPCR" "$HASHCPY"
 
-#PCRVALUE="0000000000000000000000000000000000000000"
-
 PCRVALUE=$(cat "$AIKDIR/$HASHAIK/pcrValue")
 
 HASHSTART=$(date +%s%N)
-# Recompute hash value (CAN BE AVOIDED BY STORING OLD HASH)
-#for i in $(eval echo {1..$((COUNT-1))})
-#do
-#	LOGVALUE=$(sed "${i}q;d" "$AIKDIR/$HASHAIK/refLog' | cut -d " " -f 2)
-#	NEWPCR=$(echo "$PCRVALUE$LOGVALUE" | xxd -r -p | sha1sum | cut -d " " -f 1)
-#	PCRVALUE=$NEWPCR
 
 echo "10=$PCRVALUE" > $PUSH
 tpm_updatepcrhash $HASHCPY $PUSH $NEWHASH
 cp $NEWHASH $HASHCPY
 
-#
-#done
-
 HASHEND=$(date +%s%N)
 QUOTESTART=$(date +%s%N)
 
+# We need to verify the quote at each entry and see if one fits
 # If the logs have the same size (may want to actually check the quote...)
 if [ $END -eq 0 ]
 then
@@ -206,13 +199,12 @@ then
         echo "QUOTE: $(cat $QUOTE | base64)"
 
 	tpm_verifyquote "$AIKDIR/$HASHAIK/pubAIK" $NEWHASH $NONCE $QUOTE 2>/dev/null
-	FAIL=$?
-	if [ $FAIL -eq 0 ]
+	TPM_FAIL=$?
+	if [ $TPM_FAIL -eq 0 ]
 	then
-		#echo "Found"
 		TRUSTED=1
 	else
-		echo "tpm_verifyquote failed with $FAIL"
+		echo "tpm_verifyquote failed with $TPM_FAIL"
 	fi
 fi
 
@@ -241,6 +233,7 @@ do
 	fi
 	(( ITER++ ))
 done
+
 # Assess situation
 if [ $TRUSTED -eq 0 ]
 then
@@ -303,19 +296,19 @@ do
 	fi
 	fi
 	fi
+
 	DBENTRIES=$(echo "$CONTENTRIES" | rev | cut -d " " -f 2 | rev | cut -d ":" -f 2 | xargs redis-cli --raw -n 10 mget | awk 'NF == 0 { print "@@@";next};{ print $0}')
 	DBENT=$(echo "$DBENTRIES" | awk '$0 == "@@@" { next };{ print $0 }')
 	ENTRYCOUNT=$(echo "$CONTENTRIES" | wc -l)
 	VALIDCOUNT=$(echo "$DBENTRIES" | grep -c "@@@")
 	VALIDCOUNT=$((ENTRYCOUNT-VALIDCOUNT))
+
 	make_term_green
 	echo 'Container ID :'
 	echo "$container"
 	echo
 	make_term_normal
 	echo "$VALIDCOUNT/$ENTRYCOUNT binaries found in database"
-	#echo "List of binaries in database :"
-	#echo "$DBENTRIES"
 	echo
 	echo "List of binaries not in database:"
 
@@ -333,7 +326,7 @@ do
 	PACKS=$(echo "$DBENT" | rev | cut -d "/" -f 1 | rev | cut -d "@" -f 2 | cut -d "_" -f 1,2 | sort -u)
 
 	echo
-	echo "List of detected vulnerable packages :"
+	echo "List of detected vulnerable packages:"
 	echo
 	for packid in $PACKS
 	do
