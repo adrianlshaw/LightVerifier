@@ -110,9 +110,9 @@ mainRun(){
 		# If we are running with the --testmode flag then we 
 		# assume that the verifier is also running with the --testmode flag.
 		# Since there is no IMA or TPM in a CI service like Travis, then
-		# we use quotes we have prepared earlier...
-		cp tests/a7ca3d9fed8e1020770622d8bf2396274c608e78/client_test_quote $QUOTE
-		IMA=$(tail -n +$LINE tests/a7ca3d9fed8e1020770622d8bf2396274c608e78/client_test_log)
+		# we use TPM quotes we have prepared earlier...
+		cp tests/client_tpm12_test_quote $QUOTE
+		IMA=$(tail -n +$LINE tests/client_test_log)
 	fi
 
 	# Base64 encoding of the quote (to avoid getting stray EOF everywhere)
