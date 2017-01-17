@@ -14,10 +14,9 @@ To set things up manually on a Debian based system then
 we require the traditional Netcat package:
 
 ```bash
-$ apt-get install netcat-traditional tpm-tools libtspi-dev redis-tools redis-server
+$ apt-get install netcat-traditional tpm-tools libtspi-dev redis-tools
 ```
-Fetch the TPM quote tools from the SourceForge website,
-build and install them:
+Fetch the TPM quote dependencies, build and install them:
 
 ```bash
 $ git submodule init
@@ -34,12 +33,19 @@ you can start to install the LightVerifier tools.
 
 ### Manual server side deployment
 
-Follow these instructions to set up the measurementDB:
+Choose a trusted and secure server for deploying the verifier. Install dependencies:
+
+```bash
+$ apt-get install redis-server
+```
+
+Follow these instructions to set up the measurementDB on the verifier:
 https://github.com/adrianlshaw/LightVerifier/blob/master/measurementDB/README.md
 
-### Manual client side deployment 
+### Installing the remote attestation client
 
-Enable the TPM in the BIOS and then take ownership using **tpm_takeownership**.
+If you haven't already, then enable the TPM in the BIOS of the device
+and then take ownership using **tpm_takeownership**.
 Then proceed to make the AIK using the following commands from the
 tpm-quote-tools package:
 
