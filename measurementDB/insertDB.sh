@@ -17,7 +17,6 @@
 # Authors:	Victor Sallard
 #		Adrian L. Shaw <adrianlshaw@acm.org>
 #
-
 # grep cleans all empty string entries
 # awk #1 puts SET in front of the data
 # awk #2 formats in Redis protocol
@@ -46,28 +45,3 @@ rm $LIST
 
 rm ./shaLog
 
-# Reverse insertion (lookup by name)
-
-# This part returns the executable name
-# cat $1 | cut -d " " -f 3 | cut -d "@" -f 1 | xargs basename -a
-
-## NOTE ## The exec name can be linked to many versions and even different packages
-
-# This part returns the package name
-# cat $1 | cut -d " " -f 3 | cut -d "@" -f 2 | cut -d "_" -f 1
-
-# This part returns the package version
-# cat $1 | cut -d " " -f 3 | cut -d "@" -f 2 | cut -d "_" -f 2
-
-# This part returns the package arch (may not be useful)
-# cat $1 | cut -d " " -f 3 | cut -d "@" -f 2 | cut -d "_" -f 3
-
-# Use paste to make a command line to feed to Redis
-# paste execname pack packagename version1 hash1 ...
-
-# Use HSET to add the info to Redis
-
-#######
-# We can also store K->packagename;V->List of versions
-# Latest version is fetched with
-## SORT test DESC ALPHA LIMIT 0 1
