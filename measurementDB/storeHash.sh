@@ -25,7 +25,8 @@ computeHash(){
 	TEMP=$(mktemp -d --tmpdir=./$TDIR)
 	dpkg -x ../packages/$1 $TEMP
 	cd $TEMP
-	find ./ -type f ! -empty | sed '/^\s*$/d' | xargs file | grep -i "ELF" | cut -d ":" -f 1 | xargs sha1sum | sed "s/$/@$(basename $1 | sed -e 's/[\/&]/\\&/g')/g"
+	find ./ -type f ! -empty | sed '/^\s*$/d' | xargs file | egrep -i "ELF|script" | \
+		cut -d ":" -f 1 | xargs sha1sum | sed "s/$/@$(basename $1 | sed -e 's/[\/&]/\\&/g')/g"
 	cd ..
 	rm -rf $TEMP
 	exit 0
