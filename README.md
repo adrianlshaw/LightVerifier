@@ -5,9 +5,6 @@ TPM-based remote attestation (as well as other roots of trust).
 Most people want to use it for TCG binary attestation, where the TPM logs
 all the executable programs loaded on the platform, which can be remotely
 verified against a set of reference measurements.
-The more advanced version is the information flow tracking that we've been
-researching (to reduce the number of
-measurements needed to check).
 
 This project consists of a client and server, which both need TPM tools.
 To set things up manually on a Debian based system then
