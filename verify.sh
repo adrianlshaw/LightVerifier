@@ -89,7 +89,8 @@ then
 	else
 		if [ $EXITCODE -eq 3 ]
 		then
-			echo "The machine is not in the verifier's pool"
+			echo "The machine is not known to the verifier. Did you register the machine?"
+			echo "See the register.sh script."
 	                exit 3
 		else
 			if [ $EXITCODE -ne 0 ]
