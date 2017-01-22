@@ -21,6 +21,7 @@
 trap exitIt INT
 
 TESTMODE=0
+RUNTIME_MEASUREMENTS="/sys/kernel/security/ima/ascii_runtime_measurements"
 
 if [ $# -lt 4 ]
 then
@@ -32,6 +33,12 @@ else
 		echo "WARNING: Test mode enabled"
 		TESTMODE=1
 	fi
+fi
+
+if [[ ! -r $RUNTIME_MEASUREMENTS ]]
+then
+	echo "ERROR: Cannot read the boot and runtime log at $RUNTIME_MEASUREMENTS. Exiting."
+	exit 2
 fi
 
 PGID=$(ps -o pgid= $$ | grep -o '[0-9]*')
@@ -105,7 +112,7 @@ mainRun(){
 
 		echo "Formatting..."
 		# Fetch IMA measurements
-		IMA=$(tail -n +$LINE /sys/kernel/security/ima/ascii_runtime_measurements)
+		IMA=$(tail -n +$LINE $RUNTIME_MEASUREMENTS)
 	else
 		# If we are running with the --testmode flag then we 
 		# assume that the verifier is also running with the --testmode flag.
