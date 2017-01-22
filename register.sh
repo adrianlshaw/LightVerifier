@@ -41,7 +41,8 @@ REFLOG=$(head --lines 1 /sys/kernel/security/ima/ascii_runtime_measurements | ba
 if [[ -z "$REFLOG" ]]
 then
 	echo $REFLOG
-	echo "Could not read the IMA boot aggregate, aborting"
+	echo "Could not read the IMA boot aggregate, aborting."
+	echo "Is IMA and securityfs enabled?"
 	exit 1
 fi
 

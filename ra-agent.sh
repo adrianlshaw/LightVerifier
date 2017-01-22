@@ -21,18 +21,27 @@
 trap exitIt INT
 
 TESTMODE=0
+RUNTIME_MEASUREMENTS="/sys/kernel/security/ima/ascii_runtime_measurements"
 
 if [ $# -lt 4 ]
 then
         echo "Usage: ra-agent.sh <aik.pub> <aik.uuid> <port> <PCR numbers ...>"
 	exit 1
 else
+	# If test mode is activated, then we assume there is no IMA or TPM
 	if [ "$2" == "--testmode" ]
 	then
 		echo "WARNING: Test mode enabled"
 		TESTMODE=1
+	else
+		if [[ ! -r $RUNTIME_MEASUREMENTS ]]
+		then
+			echo "ERROR: Cannot read the boot and runtime log at $RUNTIME_MEASUREMENTS. Exiting."
+			exit 2
+		fi
 	fi
 fi
+
 
 PGID=$(ps -o pgid= $$ | grep -o '[0-9]*')
 PAIK=$1
@@ -105,14 +114,14 @@ mainRun(){
 
 		echo "Formatting..."
 		# Fetch IMA measurements
-		IMA=$(tail -n +$LINE /sys/kernel/security/ima/ascii_runtime_measurements)
+		IMA=$(tail -n +$LINE $RUNTIME_MEASUREMENTS)
 	else
 		# If we are running with the --testmode flag then we 
 		# assume that the verifier is also running with the --testmode flag.
 		# Since there is no IMA or TPM in a CI service like Travis, then
-		# we use quotes we have prepared earlier...
-		cp tests/a7ca3d9fed8e1020770622d8bf2396274c608e78/client_test_quote $QUOTE
-		IMA=$(tail -n +$LINE tests/a7ca3d9fed8e1020770622d8bf2396274c608e78/client_test_log)
+		# we use TPM quotes we have prepared earlier...
+		cp tests/client_tpm12_test_quote $QUOTE
+		IMA=$(tail -n +$LINE tests/client_test_log)
 	fi
 
 	# Base64 encoding of the quote (to avoid getting stray EOF everywhere)

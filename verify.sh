@@ -24,6 +24,20 @@
 
 TTL=5
 export AIKDIR="./"
+
+if [ $# -lt 2 ]
+then
+        echo "Usage: verify.sh <hostname> <port>"
+        exit 1
+else
+	if [ "$3" == "--testmode" ]
+	then
+		TESTMODE=1
+	fi
+fi
+
+redis-cli ping >/dev/null 2>&1 || { echo >&2 "Redis CLI not installed. Aborting."; exit 1; }
+
 KNOWN=$(redis-cli --raw -n 13 exists "$1")
 if [ $KNOWN -eq 0 ]
 then
@@ -75,7 +89,8 @@ then
 	else
 		if [ $EXITCODE -eq 3 ]
 		then
-			echo "The machine is not in the verifier's pool"
+			echo "The machine is not known to the verifier. Did you register the machine?"
+			echo "See the register.sh script."
 	                exit 3
 		else
 			if [ $EXITCODE -ne 0 ]
