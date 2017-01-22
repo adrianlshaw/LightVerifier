@@ -322,7 +322,7 @@ do
 	VALIDCOUNT=$((ENTRYCOUNT-VALIDCOUNT))
 
 	make_term_green
-	echo 'Mount path ID: $container'
+	echo "Mount path ID: $(echo $container)"
 	echo
 	make_term_normal
 	echo "$VALIDCOUNT/$ENTRYCOUNT binaries found in database"
