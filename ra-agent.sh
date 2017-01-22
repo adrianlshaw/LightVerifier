@@ -28,18 +28,20 @@ then
         echo "Usage: ra-agent.sh <aik.pub> <aik.uuid> <port> <PCR numbers ...>"
 	exit 1
 else
+	# If test mode is activated, then we assume there is no IMA or TPM
 	if [ "$2" == "--testmode" ]
 	then
 		echo "WARNING: Test mode enabled"
 		TESTMODE=1
+	else
+		if [[ ! -r $RUNTIME_MEASUREMENTS ]]
+		then
+			echo "ERROR: Cannot read the boot and runtime log at $RUNTIME_MEASUREMENTS. Exiting."
+			exit 2
+		fi
 	fi
 fi
 
-if [[ ! -r $RUNTIME_MEASUREMENTS ]]
-then
-	echo "ERROR: Cannot read the boot and runtime log at $RUNTIME_MEASUREMENTS. Exiting."
-	exit 2
-fi
 
 PGID=$(ps -o pgid= $$ | grep -o '[0-9]*')
 PAIK=$1
