@@ -28,13 +28,15 @@ CENTOS="rsync://anorien.csc.warwick.ac.uk/CentOS/7/"
 # Default distro to sync is Debian
 DISTRO=$DEBIAN
 
-rsync -aiz --ignore-existing \
+rsync --archive --itemize-changes --compress --ignore-existing \
 	--include="*/" \
 	--include="*i386" \
 	--include="*amd64" \
 	--include="*x86-64*" \
-	--exclude "isos" \
-	--exclude="*" \
+	--include="*x86_64*" \
+	--include="*.deb" \
+	--include="*.rpm" \
+	--exclude "*" \
 	$DISTRO ./packages | egrep '^>' | cut -d " " -f 2 >> scan_files
 
 # Sort the files to be hashed

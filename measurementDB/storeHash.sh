@@ -23,8 +23,17 @@
 
 computeHash(){
 	TEMP=$(mktemp -d --tmpdir=./$TDIR)
-	dpkg -x ../packages/$1 $TEMP
-	cd $TEMP
+	# If not a Debian package then try RPM
+	#>&2 echo "Currently in $PWD, going to copy ../packages/$1, heading to $PWD/$TEMP"
+	dpkg -x ../packages/$1 $TEMP >/dev/null 2>&1 || cd $PWD/$TEMP && rpm2cpio ../../packages/$1 | cpio -idm >/dev/null 2>&1
+	if [ $? -gt 0 ];
+	then
+		>&2 echo "$1 failed" > ../../pkgs.failed
+		exit 1
+	else
+		>&2 echo "$1 succeeded"
+	fi
+	cd $TEMP >/dev/null 2>&1
 	find ./ -type f ! -empty | sed '/^\s*$/d' | xargs file | egrep -i "ELF|script" | \
 		cut -d ":" -f 1 | xargs sha1sum | sed "s/$/@$(basename $1 | sed -e 's/[\/&]/\\&/g')/g"
 	cd ..
