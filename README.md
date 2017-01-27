@@ -11,9 +11,10 @@ To set things up manually on a Debian based system then
 we require the traditional Netcat package:
 
 ```bash
-$ apt-get install netcat-traditional tpm-tools libtspi-dev redis-tools
+$ apt-get install netcat-traditional tpm-tools redis-tools libtspi-dev autoconf make gcc
 ```
-Fetch the TPM quote dependencies, build and install them:
+Fetch the TPM quote dependencies, build and install them
+(the last four packages are solely needed for compiling these):
 
 ```bash
 $ git submodule init
