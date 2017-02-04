@@ -16,6 +16,6 @@
 
 ./downloadDeb.sh
 
-./storeHash.sh
+./measure-executables scan_files
 
 ./insertDB.sh

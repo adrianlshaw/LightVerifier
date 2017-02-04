@@ -32,14 +32,28 @@ computeHash(){
 	exit 0
 }
 
+display_usage() {
+        echo "store-hash, a tool that takes a list of file paths and looks for executables to hash"
+        echo -e "\nUsage:\nmeasure-executables <list_of_filepaths> \n"
+}
+
+# if less than one argument supplied, display usage
+if [[ $# -le 0 || ( $# == "--help") ||  $# == "-h" ]]
+then
+        display_usage
+        exit 1
+fi
+
+SCAN_FILES=$1
+
 export -f computeHash
 
 TDIR=$(mktemp -d --tmpdir=./)
-touch scan_files
+touch $SCAN_FILES
 cd $TDIR
-cat ../scan_files | parallel computeHash {} >> ../shaLog
+cat $SCAN_FILES | parallel computeHash {} >> ../shaLog
 
-rm ../scan_files
+rm $SCAN_FILES
 
 sort -u ../shaLog > shlg
 mv shlg ../shaLog
