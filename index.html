@@ -1,19 +1,142 @@
+<!DOCTYPE html>
 <html>
 
-LightVerifier is a set of tools to remotely verify the integrity of Linux systems. In essence, it uses 
-a computer’s Trusted Platform Module and some Linux kernel features to track what programs execute, in such a way that the software on the machine cannot lie about what’s running. This is known as a hardware-based remote attestation. 
-Therefore, unauthorised software modifications or execution can be detected in near real time. 
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-The aim of the project is to provide a standard set of remote attestation tools that emphasise simplicity and modularity. Through this approach, more complex monitoring systems can be built on top of common functionalities simply by invoking the tools.   
+    <title>LightVerifier</title>
+    <meta name="description" content="LightVerifier attestation tools for Linux">
 
-The dependencies for the tools are relatively minimal, and yet we are always looking for ways to reduce them. 
+    <link rel="stylesheet" href="main.css">
+    <link rel="canonical" href="https://adrianlshaw.github.io/LightVerifier/">
+</head>
 
-We can produce a verification database (to certain degrees) for a variety of Linux distributions (long-term-support (LTS) distributions only) including:
 
-* Debian 
-* Ubuntu (LTS versions)
-* CentOS 
+<body>
+    <header class="site-header">
+        <div class="wrapper">
+            <a class="site-title" href="/">LightVerifier</a>
+            <nav class="site-nav">
+                <a href="#" class="menu-icon">
+                </a>
+                <div class="trigger">
+                    <!--<a class="page-link" href="/contact/">Contact</a>
+                    <a class="page-link" href="/documentation/">Documentation</a>
+                    <a class="page-link" href="/faq/">FAQ</a>
+                    <a class="page-link" href="/publications/">Publications</a>
+                    <a class="page-link" href="/tutorial/">Tutorial</a>-->
+                </div>
+            </nav>
+        </div>
+    </header>
 
-Your contribution is very welcome! If you use this for research or production purposes, then please cite us! 
+
+    <div class="page-content">
+        <div class="wrapper">
+            <div class="post">
+
+                <header class="post-header">
+                    <h1 class="post-title"></h1>
+                </header>
+
+                <article class="post-content">
+                    <!--<h1 id="LightVerifier">LightVerifier</h1>-->
+
+                    <p>Welcome to the homepage of the LightVerifier project!</p>
+
+                    <p>
+                        LightVerifier is a set of tools to remotely verify the
+                        integrity of Linux systems. In essence, it uses a
+                        computer’s Trusted Platform Module and some Linux
+                        kernel features to track what programs execute, in such
+                        a way that the software on the machine cannot
+                        lie about what’s running. Through cryptography, a
+                        measurement list is signed by the TPM and checked
+                        against a list of known good software. This is known as
+                        a hardware-based remote attestation. Therefore,
+                        unauthorised software modifications
+                        or execution can be detected in near real time. </p>
+
+                    <p>
+                        The aim of the project is to provide a standard set of
+                        remote attestation tools that emphasise simplicity and
+                        modularity. Through this approach, more complex
+                        monitoring systems can be built on top of common
+                        functionalities simply by invoking the tools.
+                    </p>
+
+                    The dependencies for the tools are relatively minimal,
+                    and yet we are always looking for ways to reduce them.
+                    We can produce a verification database (to certain degrees)
+                    for a variety of Linux distributions
+                    (long-term-support (LTS) distributions only)
+                    including:
+                    <ul>
+                      <li>Debian</li>
+                      <li>Ubuntu (LTS versions)</li>
+                      <li>CentOS 7</li>
+                    </ul>
+                    <p>
+                      Your contribution is very welcome!
+                      If you use this for research or production purposes,
+                      then please cite us or let us know your
+                      requirements.
+                    </p>
+
+                    <p>
+                      To get started, see the project
+                      <a href="github.com/adrianlshaw/LightVerifier">README</a>
+                      <p>All activities of the project are public and all
+                        results are in the public domain. We welcome anyone
+                        interested to join us in contributing to the project.
+                      </p>
+
+                    <p>The LightVerifier project is being led by Adrian Shaw
+                      as part of general research activities. Let him know.</p>
+
+                </article>
+            </div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+
+        <div class="wrapper">
+
+            <h2 class="footer-heading">LightVerifier</h2>
+
+            <div class="footer-col-wrapper">
+                <div class="footer-col  footer-col-1">
+                    <ul class="contact-list">
+                        <li>LightVerifier</li>
+                        <li>
+                            <a href="mailto:"></a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="footer-col  footer-col-2">
+                    <ul class="social-media-list">
+
+                        <li>
+                            <a href="https://github.com/adrianlshaw/LightVerifier">
+                                <span class="icon  icon--github"></span>
+                                <span class="username">LightVerifier</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </div>
+
+                <div class="footer-col  footer-col-3">
+                    <p class="text">LightVerifier Attestation Tools
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
 
 </html>
