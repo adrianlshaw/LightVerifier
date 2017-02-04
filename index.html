@@ -64,15 +64,24 @@
                         remote attestation tools that emphasise simplicity and
                         modularity. Through this approach, more complex
                         monitoring systems can be built on top of common
-                        functionalities simply by invoking the tools.
+			functionalities simply by invoking the tools. For 
+			example, network protocols standardised by TCG could
+			eventually be layered on top of the existing tools.
+			The project aims to support basic TCG protocols as well
+			as interesting alternatives. Currently, it supports TPM
+			1.2 but it also aims to support newer TPMs as well
+			as other hardware-based roots of trust.
                     </p>
 
+		    <p>
                     The dependencies for the tools are relatively minimal,
                     and yet we are always looking for ways to reduce them.
                     We can produce a verification database (to certain degrees)
                     for a variety of Linux distributions
                     (long-term-support (LTS) distributions only)
-                    including:
+		    including:
+		    </p>
+
                     <ul>
                       <li>Debian</li>
                       <li>Ubuntu (LTS versions)</li>
@@ -87,7 +96,7 @@
 
                     <p>
                       To get started, see the project
-                      <a href="github.com/adrianlshaw/LightVerifier">README</a>
+                      <a href="https://github.com/adrianlshaw/LightVerifier">README</a>
                       <p>All activities of the project are public and all
                         results are in the public domain. We welcome anyone
                         interested to join us in contributing to the project.
