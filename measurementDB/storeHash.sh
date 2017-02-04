@@ -16,8 +16,8 @@
 # Authors:	Victor Sallard
 #		Adrian L. Shaw <adrianlshaw@acm.org>
 #
-# This script will find the debian packages, unpack them,
-# hash the executables and store the hash in Redis.
+# This script will find DEB and RPM packages, unpack them,
+# hash the executables and store the hashes in a file called shaLog.
 # It will also keep track of the already hashed packages
 # and store their name in a file
 
