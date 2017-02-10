@@ -18,13 +18,25 @@
 #		Adrian L. Shaw <adrianlshaw@acm.org>
 #
 
+# Debian-based distributions
 DEBIAN="rsync://ftp.uk.debian.org/debian/"
 UBUNTU="rsync://archive.ubuntu.com/ubuntu/"
+
+# RPM-based distributions, with an example mirror
+CENTOS7="rsync://anorien.csc.warwick.ac.uk/CentOS/7/"
 
 # Default distro to sync is Debian
 DISTRO=$DEBIAN
 
-rsync -aiz --ignore-existing --include="*/" --include="*i386.deb" --include="*amd64.deb" --exclude="*" $DISTRO ./packages | egrep '^>' | cut -d " " -f 2 >> scan_files
+rsync --archive --itemize-changes --compress --ignore-existing \
+	--include="*/" \
+	--include="*noarch*" \
+	--include="*i386.deb" \
+	--include="*amd64.deb*" \
+	--include="*x86-64.rpm*" \
+	--include="*x86_64.rpm*" \
+	--exclude "*" \
+	$DISTRO ./packages | egrep '^>' | cut -d " " -f 2 >> scan_files
 
 # Sort the files to be hashed
 sort -u scan_files > scn

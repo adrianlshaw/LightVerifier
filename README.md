@@ -32,16 +32,17 @@ you can start to install the LightVerifier tools.
 ### Manually setting up the verifier's measurementDB
 
 Choose a trusted and secure server for deploying the verifier. 
-Install the dependencies:
+Install the dependencies for Debian:
 
 ```bash
-$ apt-get install redis-server redis-tools debmirror parallel
+$ apt-get install redis-server redis-tools debmirror parallel rpm2cpio
 ```
 
 The measurementDB currently supports the creation of reference 
 measurements for a few Linux distributions, including:
 * Debian
 * Ubuntu 
+* CentOS 7
 
 It would be nice to support a few LTS distributions, including 
 RH-like distributions like CentOS. Pull requests are welcome. 
@@ -82,8 +83,8 @@ The current default is Debian. To change this to another distro, change the
 
 If you haven't already, then enable the TPM in the BIOS of the device
 and then take ownership using **tpm_takeownership**.
-Then proceed to make the AIK using the following commands from the
-tpm-quote-tools package:
+Then proceed to make the Attestation Identity Key (AIK)
+using the following commands from the included tpm-quote-tools package:
 
 ```bash
 $ tpm_mkuuid aik.uuid
@@ -131,7 +132,7 @@ If successful, it will generate a file called report.log.
 it waits for a request from the verifier and sends both the log and TPM quote.
 You can run it with:
 ```bash
-$ ./ra-agent.sh <publicAIKcert> <AIKuuid> <port> 10
+$ ./ra-agent.sh <aik.pub> <aik.uuid> <port> 10
 ```
 
 ## How does it work
