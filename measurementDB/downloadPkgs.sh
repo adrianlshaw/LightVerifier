@@ -23,19 +23,18 @@ DEBIAN="rsync://ftp.uk.debian.org/debian/"
 UBUNTU="rsync://archive.ubuntu.com/ubuntu/"
 
 # RPM-based distributions, with an example mirror
-CENTOS="rsync://anorien.csc.warwick.ac.uk/CentOS/7/"
+CENTOS7="rsync://anorien.csc.warwick.ac.uk/CentOS/7/"
 
 # Default distro to sync is Debian
-DISTRO=$CENTOS
+DISTRO=$DEBIAN
 
 rsync --archive --itemize-changes --compress --ignore-existing \
 	--include="*/" \
-	--include="*i386" \
-	--include="*amd64" \
-	--include="*x86-64*" \
-	--include="*x86_64*" \
-	--include="*.deb" \
-	--include="*.rpm" \
+	--include="*noarch*" \
+	--include="*i386.deb" \
+	--include="*amd64.deb*" \
+	--include="*x86-64.rpm*" \
+	--include="*x86_64.rpm*" \
 	--exclude "*" \
 	$DISTRO ./packages | egrep '^>' | cut -d " " -f 2 >> scan_files
 
