@@ -26,7 +26,8 @@ PACK=$(mktemp -p ./)
 VER=$(mktemp -p ./)
 LIST=$(mktemp -p ./)
 
-grep -v "da39a3ee5e6b4b0d3255bfef95601890afd80709" ./shaLog > $LIST
+# Don't insert null hashes into the database
+grep --invert-match "da39a3ee5e6b4b0d3255bfef95601890afd80709" ./shaLog > $LIST
 
 cat $LIST | cut -d " " -f 3 | cut -d "@" -f 2 | cut -d "_" -f 1 > $PACK
 cat $LIST | cut -d " " -f 3 | cut -d "@" -f 2 | cut -d "_" -f 2 > $VER

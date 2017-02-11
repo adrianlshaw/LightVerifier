@@ -16,15 +16,24 @@
 # Authors:	Victor Sallard
 #		Adrian L. Shaw <adrianlshaw@acm.org>
 #
-# This script will find the debian packages, unpack them,
-# hash the executables and store the hash in Redis.
+# This script will find DEB and RPM packages, unpack them,
+# hash the executables and store the hashes in a file called shaLog.
 # It will also keep track of the already hashed packages
 # and store their name in a file
 
 computeHash(){
 	TEMP=$(mktemp -d --tmpdir=./$TDIR)
-	dpkg -x ../packages/$1 $TEMP
-	cd $TEMP
+	# If not a Debian package then try RPM
+	#>&2 echo "Currently in $PWD, going to copy ../packages/$1, heading to $PWD/$TEMP"
+	dpkg -x ../packages/$1 $TEMP >/dev/null 2>&1 || cd $PWD/$TEMP && rpm2cpio ../../packages/$1 | cpio -idm >/dev/null 2>&1
+	if [ $? -gt 0 ];
+	then
+		>&2 echo "$1 failed" > ../../pkgs.failed
+		exit 1
+	else
+		>&2 echo "$1 succeeded"
+	fi
+	cd $TEMP >/dev/null 2>&1
 	find ./ -type f ! -empty | sed '/^\s*$/d' | xargs file | egrep -i "ELF|script" | \
 		cut -d ":" -f 1 | xargs sha1sum | sed "s/$/@$(basename $1 | sed -e 's/[\/&]/\\&/g')/g"
 	cd ..
