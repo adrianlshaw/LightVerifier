@@ -28,5 +28,5 @@ then
 	exit 1
 fi 
  
-wget --mirror --convert-links --accept "*.deb" $1
+wget --mirror --convert-links --accept "*.deb" $1 && \
 find . -name \*.deb -print > $2
