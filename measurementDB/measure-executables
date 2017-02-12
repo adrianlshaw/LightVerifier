@@ -42,7 +42,7 @@ computeHash(){
 }
 
 display_usage() {
-        echo "store-hash, a tool that takes a list of file paths and looks for executables to hash"
+        echo "measure-executables, a tool that takes a list of file paths and looks for executables to hash"
         echo -e "\nUsage:\nmeasure-executables <list_of_filepaths> \n"
 }
 
