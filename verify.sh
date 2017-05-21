@@ -39,24 +39,24 @@ fi
 redis-cli ping >/dev/null 2>&1 || { echo >&2 "Redis CLI not installed. Aborting."; exit 1; }
 
 KNOWN=$(redis-cli --raw -n 13 exists "$1")
-if [ $KNOWN -eq 0 ]
+if [ "$KNOWN" -eq 0 ]
 then
 	# Generate nonce
 	NONCE=$(openssl rand 20)
 
 	# Add the line number after the nonce to only get the new log part
-	SEND=$(echo $(echo $NONCE | base64) '1')
+	SEND=$(echo $(echo "$NONCE" | base64) '1')
 
 	# Detect netcat version
 	PARAM=""
 	VERSION=$(dpkg-query -f '${binary:Package}\n' -W | grep netcat)
-	echo $VERSION | grep traditional > /dev/null
+	echo "$VERSION" | grep traditional > /dev/null
 	if [ $? -eq 1 ]
 	then
         	PARAM="-q 20"
 	fi
 	# Request the pubAIK/quote/log file
-	PUBAIK=$(echo $SEND | nc $PARAM $1 $2)
+	PUBAIK=$(echo "$SEND" | nc $PARAM $1 $2)
 
 	if [ $? -ne 0 ]
 	then
@@ -117,6 +117,6 @@ CSV=$(echo "$STATS" | head -n 1 | cut -d " " -f 1)","$(echo "$STATS" | tail -n +
 
 echo "$CSV" >> ./statistics.csv
 
-cat $AIKDIR/$PUBAIK/report.log
+cat "$AIKDIR/$PUBAIK/report.log"
 
 exit 0
