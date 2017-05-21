@@ -1,4 +1,5 @@
 #/bin/bash
+service redis-server start
 pkill ra-agent
 pkill lqr.sh
 pkill nc.traditional
