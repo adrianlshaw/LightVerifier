@@ -56,7 +56,7 @@ then
         	PARAM="-q 20"
 	fi
 	# Request the pubAIK/quote/log file
-	PUBAIK=$(echo "$SEND" | nc "$PARAM" $1 $2)
+	PUBAIK=$(echo "$SEND" | nc "$PARAM $1 $2")
 
 	if [ $? -ne 0 ]
 	then
