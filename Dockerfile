@@ -1,10 +1,11 @@
 FROM debian:jessie
 WORKDIR /testsite/
 RUN apt-get -qq update
-RUN apt-get install -y git make gcc netcat-traditional tpm-tools libtspi-dev git autoconf redis-server redis-tools
+RUN apt-get install -y -qq git make gcc netcat-traditional vim-common tpm-tools \
+	    libtspi-dev git autoconf redis-server redis-tools
+COPY . /testsite/ 
+RUN git submodule init && git submodule update
 RUN cd tpm-quote-tools && autoreconf -i
-COPY . 
-RUN ./configure
-RUN make install
-RUN cd ..
+RUN cd tpm-quote-tools && ./configure
+RUN cd tpm-quote-tools && make install
 ENTRYPOINT ["bash", "tests/test-script.sh"]
