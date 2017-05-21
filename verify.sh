@@ -45,7 +45,7 @@ then
 	NONCE=$(openssl rand 20)
 
 	# Add the line number after the nonce to only get the new log part
-	SEND=$(echo $(echo "$NONCE" | base64) '1')
+	SEND=$(echo $(echo "$NONCE" | base64) "1")
 
 	# Detect netcat version
 	PARAM=""
@@ -56,7 +56,7 @@ then
         	PARAM="-q 20"
 	fi
 	# Request the pubAIK/quote/log file
-	PUBAIK=$(echo "$SEND" | nc $PARAM $1 $2)
+	PUBAIK=$(echo "$SEND" | nc "$PARAM" $1 $2)
 
 	if [ $? -ne 0 ]
 	then
