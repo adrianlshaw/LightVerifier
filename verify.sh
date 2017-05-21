@@ -32,7 +32,7 @@ then
 else
 	if [ "$3" == "--testmode" ]
 	then
-		TESTMODE=1
+		echo "Unimplemented: Activating testmode"
 	fi
 fi
 
@@ -81,7 +81,7 @@ REPORT="$AIKDIR/$PUBAIK/report.log"
 EXISTS=$(redis-cli --raw -n 14 exists "$PUBAIK")
 if [ $EXISTS -eq 0 ]
 then
-	flock /var/lock/tpm_request_$PUBAIK ./lqr.sh $1 $2 > $REPORT 
+	flock /var/lock/tpm_request_$PUBAIK ./lqr.sh $1 $2 > $REPORT
 	EXITCODE=$?
 
 	if [ $EXITCODE -eq 2 ]
