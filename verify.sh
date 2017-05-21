@@ -76,10 +76,12 @@ then
 	mkdir "$AIKDIR/$PUBAIK"
 fi
 
+REPORT="$AIKDIR/$PUBAIK/report.log"
+
 EXISTS=$(redis-cli --raw -n 14 exists "$PUBAIK")
 if [ $EXISTS -eq 0 ]
 then
-	flock /var/lock/tpm_request_$PUBAIK ./lqr.sh $1 $2 > $AIKDIR/$PUBAIK/report.log
+	flock /var/lock/tpm_request_$PUBAIK ./lqr.sh $1 $2 > $REPORT 
 	EXITCODE=$?
 
 	if [ $EXITCODE -eq 2 ]
@@ -101,22 +103,22 @@ then
 		fi
 	fi
 
-	echo >> $AIKDIR/$PUBAIK/report.log
-	echo "Log generation time :" >> $AIKDIR/$PUBAIK/report.log
-	date >> $AIKDIR/$PUBAIK/report.log
-	echo "Log TTL :" >> $AIKDIR/$PUBAIK/report.log
-	echo "$TTL" >> $AIKDIR/$PUBAIK/report.log
+	echo >> "$REPORT"
+	echo "Log generation time :" >> "$REPORT"
+	date >> "$REPORT"
+	echo "Log TTL :" >> "$REPORT"
+	echo "$TTL" >> "$REPORT"
 
 	# This will create an entry valid for $TTL seconds
-	redis-cli --raw -n 14 set $PUBAIK TRUST EX $TTL >/dev/null
+	redis-cli --raw -n 14 set "$PUBAIK" TRUST EX "$TTL" >/dev/null
 fi
 
-STATS=$(tail -n 13 $AIKDIR/$PUBAIK/report.log | head -n 8)
+STATS=$(tail -n 13 "$REPORT" | head -n 8)
 
 CSV=$(echo "$STATS" | head -n 1 | cut -d " " -f 1)","$(echo "$STATS" | tail -n +3 | cut -d " " -f 4 | paste -sd,)
 
 echo "$CSV" >> ./statistics.csv
 
-cat "$AIKDIR/$PUBAIK/report.log"
+cat "$REPORT"
 
 exit 0
