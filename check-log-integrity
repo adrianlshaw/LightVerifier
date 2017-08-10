@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+#
+# (c) Copyright 2016-2017 Adrian L. Shaw
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License, version 2, as published by the
+# Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
+# License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Authors:	Adrian L. Shaw <adrianlshaw@acm.org>
+
+FINALTPMPCR=
+LOG=
+TEST=0
+DEBUG=0
+
+function debug {
+	if [ $DEBUG -eq 1 ]; then
+		echo "$1"
+	fi
+}
+
+for i in "$@"
+do
+	if [ "$i" == "--test" ]; then
+		echo "Ignoring parameters. Testing against host TPM and host measurement log"
+		TEST=1
+		FINALTPMPCR=$(grep "PCR-10" /sys/class/tpm/tpm0/pcrs | cut -d ':' -f 2 | tr -d '[:space:]' | awk '{print tolower($0)}')
+		LOG=$(cat /sys/kernel/security/ima/ascii_runtime_measurements)
+	fi
+
+	if [ "$i" == "--debug" ]; then
+		DEBUG=1
+	fi
+done
+
+if [ "$#" -ne 2 ] && [ $TEST -eq 0 ]; then
+	echo -e "Usage:\n        check-log-integrity [ima_ascii_measurements_file] [TPM PCR-10 value] [options]"
+	echo -e "Example:\n        check-log-integrity ima.log 46c1e95239bdc17a09aedca64e6a4a1bb2baaf76s"
+	echo -e "Options:\n    --test       test using host TPM and host IMA log in sysfs (may require root)"
+	exit 2
+else
+	if [ $TEST -eq 0 ]; then
+		LOG=$(cat "$1")
+		FINALTPMPCR=$(cat "$2")
+	fi
+fi
+
+ZERO="0000000000000000000000000000000000000000"
+
+TPMPCR=$ZERO
+
+count=0
+
+IFS=$'\n'       # make newlines the only separator
+for line in $LOG
+do
+	echo -ne "$count"\\r
+	debug "PCR Before: $TPMPCR"
+	EXTEND=$(echo "$line" | cut -d ' ' -f2) # get the first IMA field
+	debug "Extend w/: $EXTEND"
+	# Concatenates values without newline char and convert it to plain hexdump stype
+	TPMPCR=$(printf "%s%s" "$TPMPCR" "$EXTEND" | xxd -revert -plain | sha1sum - | cut -d ' ' -f1 )
+	debug "PCR After: $TPMPCR"
+
+	(( count++ ))
+	if [ "$TPMPCR" == "$FINALTPMPCR" ]; then
+		echo "Woohoo! TPM PCR matches line $count"
+		exit 0
+	fi
+done
+
+echo "Failed to validate. The final TPM PCR value is meant to be $FINALTPMPCR"
+exit 1
