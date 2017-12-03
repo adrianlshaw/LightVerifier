@@ -1,0 +1,14 @@
+# docker build -f Dockerfile.agent -t agent .
+# docker run --rm -ti -v /sys/kernel/security:/sys/kernel/security -v $PWD:/opt -v /dev/tpm0:/dev/tpm0 -p 5000:5000 --privileged agent
+FROM debian:jessie
+WORKDIR /testsite/
+RUN apt-get -qq update && apt-get -y -qq install netcat-traditional tpm-tools make git gcc autoconf libtspi-dev trousers
+COPY . /testsite/ 
+RUN git submodule init && git submodule update
+RUN cd tpm-quote-tools && autoreconf -i
+RUN cd tpm-quote-tools && ./configure
+RUN cd tpm-quote-tools && make install
+RUN cp ra-agent.sh /usr/bin/
+RUN rm -rf * && apt-get -y -qq purge make git gcc autoconf libtspi-dev
+WORKDIR /opt
+CMD chown tss:tss /var/lib/tpm -R && chown tss:tss /dev/tpm* && service trousers start && ra-agent.sh aik.pub aik.uuid 5000 10
