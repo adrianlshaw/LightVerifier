@@ -17,8 +17,6 @@
 # Authors:	Victor Sallard
 #		Adrian L. Shaw <adrianlshaw@acm.org>
 #
-#set -euo pipefail
-#IFS=$'\n\t'
 
 trap exitIt INT
 
