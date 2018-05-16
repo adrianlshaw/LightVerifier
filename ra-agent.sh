@@ -17,11 +17,26 @@
 # Authors:	Victor Sallard
 #		Adrian L. Shaw <adrianlshaw@acm.org>
 #
+set -euo pipefail
+IFS=$'\n\t'
 
 trap exitIt INT
 
 TESTMODE=0
 RUNTIME_MEASUREMENTS="/sys/kernel/security/ima/ascii_runtime_measurements"
+TPM_ACTIVE=$(cat /sys/class/tpm/tpm0/active)
+
+if [[ "$TPM_ACTIVE" == "0" ]]
+then
+	echo "ERROR: TPM has not been turned on, please enable it in your BIOS. Exiting."
+	exit 3
+fi
+
+if [[ ! -r $RUNTIME_MEASUREMENTS ]]
+then
+	echo "ERROR: Cannot read the boot and runtime log at $RUNTIME_MEASUREMENTS. Exiting."
+	exit 2
+fi
 
 if [ $# -lt 4 ]
 then
@@ -33,12 +48,6 @@ else
 	then
 		echo "WARNING: Test mode enabled"
 		TESTMODE=1
-	else
-		if [[ ! -r $RUNTIME_MEASUREMENTS ]]
-		then
-			echo "ERROR: Cannot read the boot and runtime log at $RUNTIME_MEASUREMENTS. Exiting."
-			exit 2
-		fi
 	fi
 fi
 
