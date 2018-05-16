@@ -24,7 +24,7 @@ trap exitIt INT
 
 TESTMODE=0
 RUNTIME_MEASUREMENTS="/sys/kernel/security/ima/ascii_runtime_measurements"
-TPM_ACTIVE=$(cat /sys/class/tpm/tpm0/active)
+TPM_ACTIVE=$(cat /sys/class/tpm/tpm0/active 2>/dev/null)
 
 # If test mode is activated, then we assume there is no IMA or TPM
 if [ "$2" == "--testmode" ]
@@ -49,7 +49,6 @@ if [ $# -lt 4 ]
 then
         echo "Usage: ra-agent.sh <aik.pub> <aik.uuid> <port> <PCR numbers ...>"
 	exit 1
-else
 fi
 
 
