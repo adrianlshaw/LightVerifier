@@ -26,13 +26,20 @@ TESTMODE=0
 RUNTIME_MEASUREMENTS="/sys/kernel/security/ima/ascii_runtime_measurements"
 TPM_ACTIVE=$(cat /sys/class/tpm/tpm0/active)
 
-if [[ "$TPM_ACTIVE" == "0" ]]
+# If test mode is activated, then we assume there is no IMA or TPM
+if [ "$2" == "--testmode" ]
+then
+	echo "WARNING: Test mode enabled"
+	TESTMODE=1
+fi
+
+if [[ "$TPM_ACTIVE" == "0" && -z $TESTMODE ]]
 then
 	echo "ERROR: TPM has not been turned on, please enable it in your BIOS. Exiting."
 	exit 3
 fi
 
-if [[ ! -r $RUNTIME_MEASUREMENTS ]]
+if [[ ! -r $RUNTIME_MEASUREMENTS && -z $TESTMODE ]]
 then
 	echo "ERROR: Cannot read the boot and runtime log at $RUNTIME_MEASUREMENTS. Exiting."
 	exit 2
@@ -43,12 +50,6 @@ then
         echo "Usage: ra-agent.sh <aik.pub> <aik.uuid> <port> <PCR numbers ...>"
 	exit 1
 else
-	# If test mode is activated, then we assume there is no IMA or TPM
-	if [ "$2" == "--testmode" ]
-	then
-		echo "WARNING: Test mode enabled"
-		TESTMODE=1
-	fi
 fi
 
 
