@@ -1,23 +1,26 @@
 # LightVerifier [![Build Status](https://travis-ci.org/adrianlshaw/LightVerifier.svg?branch=master)](https://travis-ci.org/adrianlshaw/LightVerifier)
 
-A lightweight IMA agent and verification server that can be used for
-TPM-based remote attestation (as well as other roots of trust).
-Most people want to use it for TCG binary attestation, where the TPM logs
-all the executable programs loaded on the platform, which can be remotely
-verified against a set of reference measurements.
+LightVerifier is a small set of tools to remotely verify the integrity of Linux systems. 
+In essence, it uses a computer’s Trusted Platform Module (TPM) and some Linux kernel features to track what programs execute, 
+in such a way that the software on the machine cannot lie about what’s running. Through cryptography, a measurement list is 
+signed by the TPM and checked against a database of known good software measurements. 
+This is known as a hardware-based remote attestation. 
+Therefore, unauthorised software modifications or execution can be detected.
 
-This project consists of a client and server, which both need TPM tools.
-To set things up manually on a Debian based system then
-we require the traditional Netcat package:
+This project consists of a client (ra-agent) and server (verifier).
+**Important note**:
+This project currently only works with TPM 1.2, but 2.0 should be easy to incorporate.
 
 ```bash
-$ apt-get install tpm-quote-tools netcat-traditional tpm-tools redis-tools libtspi-dev autoconf make gcc
+$ apt-get install tpm-quote-tools netcat-traditional tpm-tools redis-tools \
+		libtspi-dev autoconf make gcc
 ```
 
 Once this depedency is installed on both client and server, 
 you can start to install the LightVerifier tools.
 
-### Manually setting up the verifier's measurementDB
+
+## Setting up the verifier database
 
 Choose a trusted and secure server for deploying the verifier. 
 Install the dependencies for Debian:
