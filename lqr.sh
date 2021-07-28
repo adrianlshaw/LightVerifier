@@ -316,16 +316,14 @@ LIST=$(cat "$AIKDIR/$HASHAIK/refLog" | tail -n +2)
 if [ $NGMODE -eq 0 ]
 then
 	CONTAINERLIST="ima-ng"
-else if [ $CONTMODE -eq 0 ]
+elif [ $CONTMODE -eq 0 ]
 then
 	CONTAINERLIST=$(echo "$LIST" | cut -d " " -f 4 | sort -u)
 
-else if [ $SUBJMODE -eq 0 ]
+elif [ $SUBJMODE -eq 0 ]
 then
 	CONTAINERLIST=$(echo "$LIST" | cut -d " " -f 4 | sort -u)
 	LIST=$(echo "$LIST" | grep 'ACT=*x*&')
-fi
-fi
 fi
 
 for container in $CONTAINERLIST
@@ -333,14 +331,12 @@ do
 	if [ $NGMODE -eq 0 ]
 	then
 		CONTENTRIES=$LIST
-	else if [ $CONTMODE -eq 0 ]
+	elif [ $CONTMODE -eq 0 ]
 	then
 		CONTENTRIES=$(echo "$LIST" | awk '$4 == '"\"$(echo $container)\""' { print $0 }')
-	else if [ $SUBJMODE -eq 0 ]
+	elif [ $SUBJMODE -eq 0 ]
 	then
 		CONTENTRIES=$(echo "$LIST" | awk '$4 == '"\"$(echo $container)\""' { print $0 }')
-	fi
-	fi
 	fi
 
 	DBENTRIES=$(echo "$CONTENTRIES" | rev | cut -d " " -f 2 | rev \
