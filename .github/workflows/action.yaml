@@ -1,0 +1,20 @@
+name: action
+on:
+  schedule: [push, pull_request]
+  
+jobs:
+  job1:
+    runs-on: [ubuntu-latest]
+    steps:
+      - uses: actions/setup-python@v1
+      - uses: actions/checkout@v2
+      - name: Run
+        shell: bash
+        run: |
+          docker build -t test .
+          docker run test
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          branch: master
+          force: true
