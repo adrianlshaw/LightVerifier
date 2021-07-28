@@ -1,6 +1,5 @@
 name: action
-on:
-  schedule: [push, pull_request]
+on: [push, pull_request]
   
 jobs:
   job1:
