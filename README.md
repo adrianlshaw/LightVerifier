@@ -11,21 +11,9 @@ To set things up manually on a Debian based system then
 we require the traditional Netcat package:
 
 ```bash
-$ apt-get install netcat-traditional tpm-tools redis-tools libtspi-dev autoconf make gcc
+$ apt-get install tpm-quote-tools netcat-traditional tpm-tools redis-tools libtspi-dev autoconf make gcc
 ```
-Fetch the TPM quote dependencies, build and install them
-(the last four packages are solely needed for compiling these):
 
-```bash
-$ git submodule init
-$ git submodule update
-$ cd tpm-quote-tools
-$ autoreconf -i
-$ ./configure
-$ make
-$ make install
-$ cd ..
-```
 Once this depedency is installed on both client and server, 
 you can start to install the LightVerifier tools.
 
@@ -40,6 +28,7 @@ $ apt-get install redis-server redis-tools debmirror parallel rpm2cpio
 
 The measurementDB currently supports the creation of reference 
 measurements for a few Linux distributions, including:
+
 * Debian
 * Ubuntu 
 * CentOS 7
@@ -121,6 +110,7 @@ This example policy is known as a binary attestation policy, but
 other types of policy are possible to some degree.
 
 ## Remote Attestation Scripts
+
 * verify.sh is the requester; its job is to fetch and analyse quotes and
 logs to attest that a platform is trustworthy. You can run it with:
 ```bash
@@ -136,6 +126,7 @@ $ ./ra-agent.sh <aik.pub> <aik.uuid> <port> 10
 ```
 
 ## How does it work
+
 The aim of the project is to use both binary attestation and CVE databases to
 evaluate trust for a given machine.
 
