@@ -10,12 +10,12 @@ REDIS_MEASUREMENTS=10
 REDIS_AIK=13
 REDIS_AIK_INFO=15
 
-HASHAIK="a7ca3d9fed8e1020770622d8bf2396274c608e78"
+HASHAIK="67b1ef23f175e0d40c18d32c6e64d8a16119407b"
 
 # Since we can't host the entire database in the test environment,
 # then let's add two reference measurements to the database
-redis-cli -n $REDIS_MEASUREMENTS set "620bfeeab8eef65f57c3ffd15945ee4363f5e4b9" "/bin/grep"
-redis-cli -n $REDIS_MEASUREMENTS set "3309e0cda7088ec9f2a3a5599e18551b07c1ed47" "/home/labs/LightVerifier/lqr.sh"
+#redis-cli -n $REDIS_MEASUREMENTS set "620bfeeab8eef65f57c3ffd15945ee4363f5e4b9" "/bin/grep"
+#redis-cli -n $REDIS_MEASUREMENTS set "3309e0cda7088ec9f2a3a5599e18551b07c1ed47" "/home/labs/LightVerifier/lqr.sh"
 
 # Add "localhost" public AIK to to the trust store
 redis-cli --raw -n $REDIS_AIK set "localhost" "$HASHAIK"
@@ -36,7 +36,7 @@ echo "Starting agent and verification server"
 ./ra-agent.sh tests/pubAIK --testmode 5000 10 &
 
 # Start the verification test
-AIKDIR=$PWD/tests ./lqr.sh localhost 5000 --testmode
+AIKDIR=$PWD/tests/2.0/ TPM2=1 ./lqr.sh localhost 5000 --testmode
 RESULT=$?
 
 # End test
