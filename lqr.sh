@@ -44,6 +44,29 @@ extend_pcr(){
 	echo -n "$1$2" | xxd -r -p | sha1sum | tr -d '-'
 }
 
+check_log_corruption(){
+	echo "Sanity checking template entries"
+	while read line; do
+		FILE=$(mktemp)
+		printf '\32\0\0\0' > $FILE
+		printf "sha1:\0" >> $FILE # Alg + colon and nul byte
+		echo $line | cut -d ' ' -f4 | cut -d ':' -f2 | xxd -r -p >> $FILE # File digest
+		FILEPATHLEN=$(echo $line | cut -d ' ' -f5 | wc -c)
+		printf "%08x" $FILEPATHLEN | tac -rs .. |  xxd -r -p >> $FILE
+		echo -n $line | cut -d ' ' -f5 | tr -d "\n" >> $FILE # File 
+		printf "\0" >> $FILE
+		#echo "Comparing  $(echo $line | cut -d ' ' -f2) with $(sha1sum $FILE)"
+		EXPECTEDPCR=$(echo $line | cut -d ' ' -f2)
+		CALCULATEDPCR=$(sha1sum $FILE | cut -d ' ' -f1)
+		rm -f $FILE
+		if [ "$EXPECTEDPCR" != "$CALCULATEDPCR" ]; then
+			echo "Aborting. Template hash is incorrect on line $line"
+			return 1
+		fi
+	done <$1
+	return 0
+}
+
 if [ -z "$AIKDIR" ]; then
 	echo "You haven't specified the AIKDIR shell variable."
 	echo "Please set it to a writeable directory, e.g. export AIKDIR=/tmp/"
@@ -248,6 +271,14 @@ then
 		echo "ERROR: tpm_verifyquote failed with $TPM_FAIL"
 		exit 1
 	fi
+fi
+
+RESULT=$(check_log_corruption $LOG)
+if [ $? -eq 1 ]; then
+	echo "Log files are corrupt and have no integrity. Bailing."
+	exit 2
+else
+	echo "Template entries verified"
 fi
 
 ITER=1

@@ -1,35 +1,25 @@
 # LightVerifier [![Build Status](https://travis-ci.org/adrianlshaw/LightVerifier.svg?branch=master)](https://travis-ci.org/adrianlshaw/LightVerifier)
 
-A lightweight IMA agent and verification server that can be used for
-TPM-based remote attestation (as well as other roots of trust).
-Most people want to use it for TCG binary attestation, where the TPM logs
-all the executable programs loaded on the platform, which can be remotely
-verified against a set of reference measurements.
+LightVerifier is a small set of tools to remotely verify the integrity of Linux systems. 
+In essence, it uses a computer’s Trusted Platform Module (TPM) and some Linux kernel features to track what programs execute, 
+in such a way that the software on the machine cannot lie about what’s running. Through cryptography, a measurement list is 
+signed by the TPM and checked against a database of known good software measurements. 
+This is known as a hardware-based remote attestation. 
+Therefore, unauthorised software modifications or execution can be detected.
 
-This project consists of a client and server, which both need TPM tools.
-To set things up manually on a Debian based system then
-we require the traditional Netcat package:
+This project consists of a client (ra-agent) and server (verifier).
+**Important note**:
+This project currently only works with TPM 1.2, but 2.0 should be easy to incorporate.
 
 ```bash
 $ apt-get install netcat-traditional tpm-tools tpm2-tools redis-tools libtspi-dev autoconf make gcc
 ```
-Fetch the TPM quote dependencies, build and install them
-(the last four packages are solely needed for compiling these):
 
-```bash
-$ git submodule init
-$ git submodule update
-$ cd tpm-quote-tools
-$ autoreconf -i
-$ ./configure
-$ make
-$ make install
-$ cd ..
-```
 Once this depedency is installed on both client and server, 
 you can start to install the LightVerifier tools.
 
-### Manually setting up the verifier's measurementDB
+
+## Setting up the verifier database
 
 Choose a trusted and secure server for deploying the verifier. 
 Install the dependencies for Debian:
@@ -40,6 +30,7 @@ $ apt-get install redis-server redis-tools debmirror parallel rpm2cpio
 
 The measurementDB currently supports the creation of reference 
 measurements for a few Linux distributions, including:
+
 * Debian
 * Ubuntu 
 * CentOS 7
@@ -147,6 +138,7 @@ This example policy is known as a binary attestation policy, but
 other types of policy are possible to some degree.
 
 ## Remote Attestation Scripts
+
 * verify.sh is the requester; its job is to fetch and analyse quotes and
 logs to attest that a platform is trustworthy. You can run it with:
 ```bash
@@ -162,6 +154,7 @@ $ ./ra-agent.sh <aik.pub> <aik.uuid> <port> 10
 ```
 
 ## How does it work
+
 The aim of the project is to use both binary attestation and CVE databases to
 evaluate trust for a given machine.
 

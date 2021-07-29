@@ -1,0 +1,14 @@
+name: action
+on: [push, pull_request]
+  
+jobs:
+  job1:
+    runs-on: [ubuntu-latest]
+    steps:
+      - uses: actions/setup-python@v1
+      - uses: actions/checkout@v2
+      - name: Run
+        shell: bash
+        run: |
+          docker build -t test .
+          docker run test
