@@ -25,15 +25,15 @@ redis-cli --raw -n $REDIS_AIK_INFO LTRIM "$HASHAIK" '-1' '0'
 redis-cli --raw -n $REDIS_AIK_INFO DEL "$HASHAIK"
 
 echo "Provisioning expected boot aggregate PCR and public AIK"
-redis-cli --raw -n $REDIS_AIK_INFO RPUSH "$HASHAIK" "$(cat tests/refLog | base64)"
-redis-cli --raw -n $REDIS_AIK_INFO RPUSH "$HASHAIK" "$(cat tests/hashPCR | base64)"
-redis-cli --raw -n $REDIS_AIK_INFO RPUSH "$HASHAIK" "$(cat tests/pcrValue | base64)"
-redis-cli --raw -n $REDIS_AIK_INFO RPUSH "$HASHAIK" "$(cat tests/pubAIK | base64)"
+redis-cli --raw -n $REDIS_AIK_INFO RPUSH "$HASHAIK" "$(cat tests/2.0/refLog | base64)"
+redis-cli --raw -n $REDIS_AIK_INFO RPUSH "$HASHAIK" "$(cat tests/2.0/hashPCR | base64)"
+redis-cli --raw -n $REDIS_AIK_INFO RPUSH "$HASHAIK" "$(cat tests/2.0/pcrValue | base64)"
+redis-cli --raw -n $REDIS_AIK_INFO RPUSH "$HASHAIK" "$(cat tests/2.0/pubAIK | base64)"
 
 echo "Starting agent and verification server"
 
 # Start the remote attestation agent
-./ra-agent.sh tests/pubAIK --testmode 5000 10 &
+./ra-agent.sh tests/2.0/pubAIK --testmode 5000 10 &
 
 # Start the verification test
 AIKDIR=$PWD/tests/2.0/ TPM2=1 ./lqr.sh localhost 5000 --testmode
