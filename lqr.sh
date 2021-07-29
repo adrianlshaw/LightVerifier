@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # (c) Copyright 2016-2017 Hewlett Packard Enterprise Development LP
 #
 # This program is free software: you can redistribute it and/or modify it under
@@ -18,6 +17,7 @@
 #		Adrian L. Shaw <adrianlshaw@acm.org>
 #
 # LQR stands for Lightweight Quote Requester
+export TPM2=1
 
 # Function declarations
 make_term_red(){
@@ -38,6 +38,10 @@ make_term_blue(){
 make_term_normal(){
 	NC='\033[0m' # No Color
 	printf "${NC}"
+}
+
+extend_pcr(){
+	echo -n "$1$2" | xxd -r -p | sha1sum | tr -d '-'
 }
 
 if [ -z "$AIKDIR" ]; then
@@ -103,7 +107,7 @@ fi
 
 if [ ! -f "$AIKDIR/$HASHAIK/pcrValue" ]
 then
-	redis-cli --raw -n $REDIS_AIK_INFO LINDEX "$HASHAIK" '2' | base64 -d > "$AIKDIR/$HASHAIK/pcrValue"
+	redis-cli --raw -n $REDIS_AIK_INFO LINDEX "$HASHAIK" '2' | base64 -d | cut -d 'x' -f2 > "$AIKDIR/$HASHAIK/pcrValue"
 fi
 
 if [ ! -f "$AIKDIR/$HASHAIK/pubAIK" ]
@@ -144,12 +148,15 @@ VERSION=$(dpkg-query -f '${binary:Package}\n' -W | grep netcat)
 echo $VERSION | grep traditional > /dev/null
 if [ $? -eq 1 ]
 then
-	PARAM="-q 20"
+	#PARAM="-q 20"
+	PARAM=""
 fi
 
 RETRY=5
 # Request the quote and the log file
-echo "$SEND" | nc.traditional $PARAM $1 $2 > $FILE
+
+echo "$SEND | nc $PARAM $1 $2"
+echo "$SEND" | nc $PARAM $1 $2 > $FILE
 
 while [ $? -ne 0 ]
 do
@@ -168,8 +175,16 @@ done
 TRANSFER=$(date +%s%N)
 
 echo "Parsing quote"
+echo $FILE
+
 # Parse the file
 ./lfp.sh $AIK $QUOTE $LOG $FILE
+
+echo "OUTPUT: $AIK\n $QUOTE \n$LOG"
+
+ls -la $AIK
+ls -la $QUOTE
+ls -la $LOG
 
 # Get received log line count
 END=$(wc -l $LOG | cut -d " " -f 1)
@@ -181,8 +196,9 @@ PCRVALUE=$(cat "$AIKDIR/$HASHAIK/pcrValue")
 
 HASHSTART=$(date +%s%N)
 
-echo "10=$PCRVALUE" > $PUSH
-tpm_updatepcrhash $HASHCPY $PUSH $NEWHASH
+echo "$PCRVALUE" > $PUSH
+RESULT=$(extend_pcr $HASHCPY $PUSH)
+echo $RESULT > $NEWHASH
 cp $NEWHASH $HASHCPY
 
 HASHEND=$(date +%s%N)
@@ -200,7 +216,26 @@ then
         echo ""
         echo "QUOTE: $(cat $QUOTE | base64)"
 
-	tpm_verifyquote "$AIKDIR/$HASHAIK/pubAIK" $NEWHASH $NONCE $QUOTE 2>/dev/null
+	if [ -n "$TPM2" ];
+	then
+		echo "HERE IS TEH QUOTE FILE"
+		cat $QUOTE
+		cat $QUOTE > debugquote-verifier
+		csplit --elide-empty-files --prefix quote $QUOTE  '/DELIMETER/+1' {*}
+		sed 's/DELIMETER//g' -i quote0*
+		QUOTEDATA=quote00
+		QUOTESIG=quote01
+		QUOTEPCRS=quote02
+		ls -la quote0*
+		cat $NONCE > mynonce
+		truncate -s -1 $QUOTEDATA
+		truncate -s -1 $QUOTESIG
+		tpm2_checkquote --public="$AIKDIR/$HASHAIK/pubAIK" --qualification="$NONCE" --message="$QUOTEDATA" --signature="$QUOTESIG" --pcr="$QUOTEPCRS"
+	else
+		tpm_verifyquote "$AIKDIR/$HASHAIK/pubAIK" $NEWHASH $NONCE $QUOTE 2>/dev/null
+	fi
+	
+	
 	TPM_FAIL=$?
 	if [ $TPM_FAIL -eq 0 ]
 	then
@@ -222,9 +257,11 @@ do
 	LOGVALUE=$(sed "${ITER}q;d" $LOG | cut -d " " -f 2)
 	NEWPCR=$(echo "$PCRVALUE$LOGVALUE" | xxd -r -p | sha1sum | cut -d " " -f 1)
 	PCRVALUE=$(echo $NEWPCR | tr '[:lower:]' '[:upper:]')
-	echo "10=$PCRVALUE" > $PUSH
+	echo "$PCRVALUE" > $PUSH
 
-	tpm_updatepcrhash $HASHCPY $PUSH $NEWHASH
+	echo "extend_pcr $cat $HASHCPY) $(cat $PUSH) $(cat $NEWHASH)"
+	OUTPUT=$(extend_pcr $HASHCPY $PUSH)
+	echo $OUTPUT > $NEWHASH
 	PCR_FAIL=$?
 	if [ $PCR_FAIL -gt 0 ]
 	then
@@ -235,9 +272,41 @@ do
 
 	cp $NEWHASH $HASHCPY
 
-	tpm_verifyquote "$AIKDIR/$HASHAIK/pubAIK" $NEWHASH $NONCE $QUOTE 2>/dev/null
+	TRUSTED=0
 
-	if [ $? -eq 0 ]
+	if [ -n "$TPM2" ]; then
+		PCRFILE=$(mktemp)
+		cat $QUOTE
+		cat $QUOTE > debugquote-verifier
+		csplit --elide-empty-files --prefix quote $QUOTE  '/DELIMETER/+1' {*}
+		sed 's/DELIMETER//g' -i quote0*
+		QUOTEDATA=quote00
+		QUOTESIG=quote01
+		QUOTEPCRS=quote02
+		cat $NONCE > mynonce
+		truncate -s -1 $QUOTEDATA
+		truncate -s -1 $QUOTESIG
+
+		tpm2_checkquote --public="$AIKDIR/$HASHAIK/pubAIK" --qualification="$NONCE" --message="$QUOTEDATA" --signature="$QUOTESIG" --pcr="$QUOTEPCRS"
+		TPM_FAIL=$?
+		if [ $TPM_FAIL -eq 1 ]; then
+			echo "TPM quote failed to verify"
+			exit 1
+		else
+			echo "TPM quote is valid"
+			TRUSTED=1
+		fi
+		
+	else
+		tpm_verifyquote "$AIKDIR/$HASHAIK/pubAIK" $NEWHASH $NONCE $QUOTE 2>/dev/null
+		if [ $TPM_FAIL -eq 1 ]; then
+			echo "TPM quote failed to verify"
+			exit 1
+		else
+			TRUSTED=1
+		fi
+	fi
+	if [ $TRUSTED -eq 1 ]
 	then
 		TRUSTED=1
 		cp $NEWHASH "$AIKDIR/$HASHAIK/hashPCR"

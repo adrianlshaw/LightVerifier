@@ -17,7 +17,7 @@
 # Authors:	Victor Sallard
 #		Adrian L. Shaw <adrianlshaw@acm.org>
 #
-
+export TPM2="1"
 trap exitIt INT
 
 TESTMODE=0
@@ -45,7 +45,7 @@ fi
 
 if [ $# -lt 4 ]
 then
-        echo "Usage: ra-agent.sh <aik.pub> <aik.uuid> <port> <PCR numbers ...>"
+        echo "Usage: ra-agent.sh <aik.pub> <aik.uuid|ak.ctx> <port> <PCR numbers ...>"
 	exit 1
 fi
 
@@ -74,6 +74,7 @@ mainRun(){
 	shift
 	shift
 	PCRS="$@"
+	echo "PCRs are $PCRS"
 
 	# Detect netcat version
 	PARAM=""
@@ -116,7 +117,21 @@ mainRun(){
 	if [ "$TESTMODE" -eq 0 ]
 	then
 		echo "Computing quote..."
-		flock /var/lock/tmp_quote_sender tpm_getquote $UUID $NONCE $QUOTE $PCRS
+		if [ -n "$TPM2" ];
+		then
+			flock /var/lock/tmp_quote_sender tpm2_quote --key-context="0x81010002" --qualification="$NONCE" --pcr-list sha1:0,1,2,3,4,5,6,7,8,9,10 -m quote --pcr=pcrs --signature=sig
+			cp pcrs test.pcrs
+			cp sig test.sig
+			cp quote test.quote
+			cp $NONCE test.nonce
+			cat quote > agentquote
+			cat sig > agentquote.sig
+			echo "DELIMETER" > separator
+			cat quote separator sig separator pcrs > $QUOTE
+			cat $QUOTE > debugquote-agent
+		else
+			flock /var/lock/tmp_quote_sender tpm_getquote $UUID $NONCE $QUOTE $PCRS
+		fi
 		echo "Done"
 
 		echo "Formatting..."

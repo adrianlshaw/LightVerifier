@@ -1,5 +1,6 @@
 #!/bin/bash
-
+set -x
+export TPM2=1
 # (c) Copyright 2016-2017 Hewlett Packard Enterprise Development LP
 #
 # This program is free software: you can redistribute it and/or modify it under
@@ -46,7 +47,13 @@ then
 	exit 1
 fi
 
-TPM_ERROR=$(tpm_getpcrhash $AIKUUID $TEMPDIR/aik.pcrhash $TEMPDIR/aik.pcrval 10 2>&1 | grep Error)
+if [ -n "$TPM2" ];
+then
+	TPM_ERROR=$(tpm2_pcrread sha1:10 | grep 10 | cut -d ':' -f2 | xargs > $TEMPDIR/aik.pcrval)
+else
+	TPM_ERROR=$(tpm_getpcrhash $AIKUUID $TEMPDIR/aik.pcrhash $TEMPDIR/aik.pcrval 10 2>&1 | grep Error)
+fi
+
 
 if [[ -n "$TPM_ERROR" ]]
 then

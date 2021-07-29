@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -x
 # (c) Copyright 2016-2017 Hewlett Packard Enterprise Development LP
 #
 # This program is free software: you can redistribute it and/or modify it under
@@ -79,7 +79,12 @@ fi
 EXISTS=$(redis-cli --raw -n 14 exists "$PUBAIK")
 if [ $EXISTS -eq 0 ]
 then
-	flock /var/lock/tpm_request_$PUBAIK ./lqr.sh $1 $2 > $AIKDIR/$PUBAIK/report.log
+	if [ -n "$TESTMODE" ];
+	then
+		flock /var/lock/tpm_request_$PUBAIK ./lqr.sh $1 $2 --testmode > $AIKDIR/$PUBAIK/report.log
+	else
+		flock /var/lock/tpm_request_$PUBAIK ./lqr.sh $1 $2 > $AIKDIR/$PUBAIK/report.log
+	fi
 	EXITCODE=$?
 
 	if [ $EXITCODE -eq 2 ]
