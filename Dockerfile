@@ -1,4 +1,4 @@
-FROM debian:jessie
+FROM ubuntu:20.04
 WORKDIR /testsite/
 RUN apt-get -qq update
 RUN apt-get install -y -qq tpm2-tools git make gcc netcat-traditional vim-common tpm-tools \
