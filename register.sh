@@ -16,6 +16,11 @@ set -x
 #
 # Authors:	Adrian L. Shaw <adrianlshaw@acm.org>
 
+extend_pcr(){
+        echo -n "$1$2" | xxd -r -p | sha1sum | tr -d '-'
+}
+
+
 if [ $# -lt 3 ]
 then
 	echo "Usage: register <aik.pub> <aik.uuid> <verifier_db_host>"
@@ -36,8 +41,8 @@ HOSTNAME=$(hostname)
 # Redis database number
 REDIS_DB_NUM=15
 TEMPDIR=$(mktemp -d)
-
-REFLOG=$(head --lines 1 /sys/kernel/security/ima/ascii_runtime_measurements | base64)
+LOG=$(head --lines 1 /sys/kernel/security/ima/ascii_runtime_measurements)
+REFLOG=$(echo $LOG | base64)
 if [[ -z "$REFLOG" ]]
 then
 	echo $REFLOG
@@ -48,7 +53,10 @@ fi
 
 if [ -n "$TPM2" ];
 then
-	TPM_ERROR=$(tpm2_pcrread sha1:10 | grep 10 | cut -d ':' -f2 | xargs > $TEMPDIR/aik.pcrval)
+	PCRHASH=$(echo $LOG | cut -d ' ' -f2)
+	RESULT=$(extend_pcr 0000000000000000000000000000000000000000 $PCRHASH)
+	echo $RESULT
+	TPM_ERROR=$(echo $RESULT > $TEMPDIR/aik.pcrval)
 else
 	TPM_ERROR=$(tpm_getpcrhash $AIKUUID $TEMPDIR/aik.pcrhash $TEMPDIR/aik.pcrval 10 2>&1 | grep Error)
 fi
