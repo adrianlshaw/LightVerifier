@@ -48,6 +48,8 @@ then
 	exit 1
 fi
 
+# Check if this is a TPM 2.0 platform
+[ -c /dev/tpmrm0 ] && export TPM2=1
 
 PGID=$(ps -o pgid= $$ | grep -o '[0-9]*')
 PAIK=$1
