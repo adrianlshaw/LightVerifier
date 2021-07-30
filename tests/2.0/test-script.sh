@@ -33,7 +33,7 @@ redis-cli --raw -n $REDIS_AIK_INFO RPUSH "$HASHAIK" "$(cat tests/2.0/pubAIK | ba
 echo "Starting agent and verification server"
 
 # Start the remote attestation agent
-./ra-agent.sh tests/2.0/pubAIK --testmode 5000 10 &
+TPM2=1 ./ra-agent.sh tests/2.0/pubAIK --testmode 5000 10 &
 
 # Start the verification test
 AIKDIR=$PWD/tests/2.0/ TPM2=1 ./lqr.sh localhost 5000 --testmode

@@ -17,7 +17,6 @@
 # Authors:	Victor Sallard
 #		Adrian L. Shaw <adrianlshaw@acm.org>
 #
-export TPM2="1"
 trap exitIt INT
 
 TESTMODE=0

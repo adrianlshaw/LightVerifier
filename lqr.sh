@@ -17,7 +17,6 @@
 #		Adrian L. Shaw <adrianlshaw@acm.org>
 #
 # LQR stands for Lightweight Quote Requester
-export TPM2=1
 
 # Function declarations
 make_term_red(){
