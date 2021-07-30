@@ -142,11 +142,12 @@ mainRun(){
 		# Since there is no IMA or TPM in a CI service like Travis, then
 		# we use TPM quotes we have prepared earlier...
 		if [ -n "$TPM2" ]; then
+			IMA=$(tail -n +$LINE tests/2.0/client_test_log)
 			cp tests/2.0/client_tpm20_test_quote $QUOTE
 		else
+			IMA=$(tail -n +$LINE tests/client_test_log)
 			cp tests/client_tpm12_test_quote $QUOTE
 		fi
-		IMA=$(tail -n +$LINE tests/client_test_log)
 	fi
 
 	# Base64 encoding of the quote (to avoid getting stray EOF everywhere)
