@@ -5,12 +5,16 @@ pkill lqr.sh
 pkill nc.traditional
 pkill nc
 
+redis-cli  -h localhost FLUSHALL
+set -xe
 # Redis DB numbers
 REDIS_MEASUREMENTS=10
 REDIS_AIK=13
 REDIS_AIK_INFO=15
 
 HASHAIK="67b1ef23f175e0d40c18d32c6e64d8a16119407b"
+
+export TPM2=1
 
 # Since we can't host the entire database in the test environment,
 # then let's add two reference measurements to the database
