@@ -1,127 +1,222 @@
 #!/bin/bash
-set -x
-# (c) Copyright 2016-2017 Hewlett Packard Enterprise Development LP
-#
-# This program is free software: you can redistribute it and/or modify it under
-# the terms of the GNU General Public License, version 2, as published by the
-# Free Software Foundation.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
-# License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Authors:	Victor Sallard
-#		Adrian L. Shaw <adrianlshaw@acm.org>
-#
+#set -eu
+#set -o pipefail
 
-# This is a wrapper to ease the use of the requester
-# $1 is the target, $2 is the port
-# AIKDIR specifies where the machine information is
+extend_pcr(){
+        echo -n "$1$2" | xxd -r -p | sha1sum | tr -d '-' | xargs
+}
 
-TTL=5
-export AIKDIR="./"
+split(){
+	INPUT=""
+	if [ $# -ge 4 -a -f "$4" ];
+	then
+		INPUT="$4"
+	else
+		INPUT="-"
+	fi
 
-if [ $# -lt 2 ]
+	BUFFER=$(cat $INPUT)
+
+	echo "$BUFFER" | awk '/##SHA1 pubAIK##/{flag=1;next}/##Base64 encoded quote##/{flag=0}flag' > $1
+	echo "$BUFFER" | awk '/##Base64 encoded quote##/{flag2=1;next}/##IMA ASCII log file##/{flag2=0}flag2' | base64 -d > $2
+	echo "$BUFFER" | awk '/##IMA ASCII log file##/{flag3=1;next}/END/{flag3=0}flag3' > $3
+}
+
+if [ ! $# -eq 3 ]
 then
-        echo "Usage: verify.sh <hostname> <port>"
+        echo "Usage: lqr.sh <hostname> <port> <ak.pub>"
         exit 1
+fi
+
+TESTMODE=0
+FILE=$(mktemp)
+QUOTE=$(mktemp)
+LOG=$(mktemp)
+AIK=$(mktemp)
+NEWHASH=$(mktemp)
+NONCE=$(mktemp)
+START=$(date +%s%N)
+TPM2=1
+PCR10=
+INITPCR="0000000000000000000000000000000000000000"
+PCR="$INITPCR"
+TRUSTED=0
+AIKPUB=$3
+AIKPUBHASH=$(sha1sum "$AIKPUB" | cut -d ' ' -f1)
+DIR="/tmp/$AIKPUBHASH/"
+COUNT=$(cat "$DIR/lastgoodline" || echo 0)
+
+if [ -f "$DIR/lastgoodpcr" ]; then
+	PCR=$(cat "$DIR/lastgoodpcr")
+fi
+
+mkdir "$DIR" >/dev/null 2>&1 || true
+
+# Generate nonce
+if [ "$TESTMODE" -eq 1 ]
+then
+        echo "WARNING: Test mode activated, the nonce is zero, and therefore insecure"
+        dd if=/dev/zero bs=1 count=20 of="$NONCE" 2>/dev/null
 else
-	if [ "$3" == "--testmode" ]
-	then
-		TESTMODE=1
-	fi
+        openssl rand 20 > "$NONCE"
 fi
 
-redis-cli ping >/dev/null 2>&1 || { echo >&2 "Redis CLI not installed. Aborting."; exit 1; }
+# Add the line number after the nonce to only get the new log part
+SEND=$(echo $(cat "$NONCE" | base64) "$COUNT")
 
-KNOWN=$(redis-cli --raw -n 13 exists "$1")
-if [ $KNOWN -eq 0 ]
+# Send request
+echo "$SEND" | nc "$1" "$2" > "$FILE"
+
+TRANSFER=$(date +%s%N)
+
+# Unmarshal response
+split "$AIK" "$QUOTE" "$LOG" "$FILE"
+
+if [ -n "$TPM2" ];
 then
-	# Generate nonce
-	NONCE=$(openssl rand 20)
-
-	# Add the line number after the nonce to only get the new log part
-	SEND=$(echo $(echo $NONCE | base64) '1')
-
-	# Detect netcat version
-	PARAM=""
-	VERSION=$(dpkg-query -f '${binary:Package}\n' -W | grep netcat)
-	echo $VERSION | grep traditional > /dev/null
-	if [ $? -eq 1 ]
-	then
-        	PARAM="-q 20"
-	fi
-	# Request the pubAIK/quote/log file
-	PUBAIK=$(echo $SEND | nc $PARAM $1 $2)
-
-	if [ $? -ne 0 ]
-	then
-		echo "Connection error."
-		exit 3
-	fi
-
-	PUBAIK=$(echo "$PUBAIK" | sed '2q;d')
-
-	redis-cli --raw -n 13 set "$1" "$PUBAIK" >/dev/null
-else
-	PUBAIK=$(redis-cli --raw -n 13 get "$1")
-fi
-
-if [ ! -d "$AIKDIR/$PUBAIK" ]
-then
-	mkdir "$AIKDIR/$PUBAIK"
-fi
-
-EXISTS=$(redis-cli --raw -n 14 exists "$PUBAIK")
-if [ $EXISTS -eq 0 ]
-then
-	if [ -n "$TESTMODE" ];
-	then
-		flock /var/lock/tpm_request_$PUBAIK ./lqr.sh $1 $2 --testmode > $AIKDIR/$PUBAIK/report.log
-	else
-		flock /var/lock/tpm_request_$PUBAIK ./lqr.sh $1 $2 > $AIKDIR/$PUBAIK/report.log
-	fi
-	EXITCODE=$?
-
-	if [ $EXITCODE -eq 2 ]
-	then
-		echo "Bad connection"
-                exit 2
-	else
-		if [ $EXITCODE -eq 3 ]
-		then
-			echo "The machine is not known to the verifier. Did you register the machine?"
-			echo "See the register.sh script."
-	                exit 3
+                cat $QUOTE > debugquote-verifier
+                csplit --elide-empty-files --quiet --prefix quote $QUOTE  '/DELIMETER/+1' {*}
+                sed 's/DELIMETER//g' -i quote0*
+                QUOTEDATA=quote00
+                QUOTESIG=quote01
+                QUOTEPCRS=quote02
+                truncate -s -1 $QUOTEDATA
+                truncate -s -1 $QUOTESIG
+                RESULT=$(tpm2_checkquote --public="$AIKPUB" \
+			--qualification="$NONCE" \
+			--message="$QUOTEDATA" \
+			--signature="$QUOTESIG" \
+			--pcr="$QUOTEPCRS" )
+                TPM_FAIL=$?
+		if [ $TPM_FAIL -eq 0 ]; then
+			PCR10=$(echo "$RESULT" | grep 10: | cut -d ':' -f2 | xargs | cut -d 'x' -f2 | tr '[:upper:]' '[:lower:]')
+                        echo "TPM quote has PCR10 value $PCR10"
 		else
-			if [ $EXITCODE -ne 0 ]
-			then
-				echo "The machine cannot be trusted (try again if machine rebooted)"
-				exit 1
-			fi
+			echo "Failed to verify TPM signature"
+			exit 1
 		fi
-	fi
 
-	echo >> $AIKDIR/$PUBAIK/report.log
-	echo "Log generation time :" >> $AIKDIR/$PUBAIK/report.log
-	date >> $AIKDIR/$PUBAIK/report.log
-	echo "Log TTL :" >> $AIKDIR/$PUBAIK/report.log
-	echo "$TTL" >> $AIKDIR/$PUBAIK/report.log
-
-	# This will create an entry valid for $TTL seconds
-	redis-cli --raw -n 14 set $PUBAIK TRUST EX $TTL >/dev/null
+else
+                tpm_verifyquote "$AIKDIR/$HASHAIK/pubAIK" $NEWHASH $NONCE $QUOTE 2>/dev/null
+                TPM_FAIL=$?
 fi
 
-STATS=$(tail -n 13 $AIKDIR/$PUBAIK/report.log | head -n 8)
+# Check if the PCR has changed
+if [ "$PCR" == "$PCR10" ]; then
+	echo "System has not changed since last integrity check"
+	TRUSTED=1
+fi
 
-CSV=$(echo "$STATS" | head -n 1 | cut -d " " -f 1)","$(echo "$STATS" | tail -n +3 | cut -d " " -f 4 | paste -sd,)
+# Check the integrity of the log
+LINENUM=$((1 + $COUNT))
+while read line; do
+                FILE=$(mktemp)
+                printf '\32\0\0\0' > "$FILE"
+                printf "sha1:\0" >> "$FILE" # Alg + colon and nul byte
+                echo $line | cut -d ' ' -f4 | cut -d ':' -f2 | xxd -r -p >> $FILE # File digest
+                FILEPATHLEN=$(echo $line | cut -d ' ' -f5 | wc -c)
+                printf "%08x" $FILEPATHLEN | tac -rs .. |  xxd -r -p >> $FILE
+                echo -n $line | cut -d ' ' -f5 | tr -d "\n" >> $FILE # File 
+                printf "\0" >> "$FILE"
+                #echo "Comparing  $(echo $line | cut -d ' ' -f2) with $(sha1sum $FILE)"
+                EXPECTEDPCR=$(echo "$line" | cut -d ' ' -f2)
+                CALCULATEDPCR=$(sha1sum "$FILE" | cut -d ' ' -f1)
+                rm -f "$FILE"
 
-echo "$CSV" >> ./statistics.csv
+		if [ "$EXPECTEDPCR" != "$CALCULATEDPCR" ]; then
+                        echo "Aborting. Template hash is incorrect on line $line"
+                        return 1
+                fi
 
-cat $AIKDIR/$PUBAIK/report.log
+		NEWPCR=$(extend_pcr "$PCR" "$CALCULATEDPCR")
+		PCR=$NEWPCR
 
-exit 0
+		echo "$LINENUM Checking $PCR against $PCR10"
+
+		if [ "$PCR" == "$PCR10" ]; then
+			echo Match!
+			TRUSTED=1
+			(( LINENUM++ ))
+			echo $LINENUM > "$DIR/lastgoodline"
+			echo "$PCR" > "$DIR/lastgoodpcr"
+			break
+		fi
+		(( LINENUM++ ))
+done <"$LOG"
+
+make_term_normal(){
+        NC='\033[0m' # No Color
+        printf "${NC}"
+}
+
+make_term_red(){
+	RED='\033[0;31m'
+	printf "${RED}"
+}
+
+make_term_green(){
+        GREEN='\033[0;32m'
+        printf "${GREEN}"
+}
+
+if [ "$TRUSTED" -eq 0 ]; then
+	rm -rf "$DIR"
+	make_term_red
+	echo Untrusted log
+	exit 1
+fi
+
+echo Log has integrity. Now checking executables.
+
+ENTRYCOUNT=$(echo "$LOG" | wc -l)
+REDIS_MEASUREMENTS=10
+DBENTRIES=$(echo "$LOG" | rev | cut -d " " -f 2 | rev | cut -d ":" -f 2 | xargs redis-cli --raw -n 10 mget  | awk 'NF == 0 { print "@@@";next};{ print $0}')
+
+DBENT=$(echo "$DBENTRIES" | awk '$0 == "@@@" { next };{ print $0 }')
+ENTRYCOUNT=$(echo "$LOG" | wc -l)
+VALIDCOUNT=$(echo "$DBENTRIES" | grep -c "@@@")
+VALIDCOUNT=$((ENTRYCOUNT-VALIDCOUNT))
+
+echo "$VALIDCOUNT/$ENTRYCOUNT binaries found in database"
+
+make_term_red # Change termcolor to red
+
+# Print packages out
+NOTIN=$(paste <(echo "$DBENTRIES" ) <(echo "$LOG" | rev | cut -d " " -f 1 | rev))
+
+echo "$NOTIN" | grep @@@ | cut -f 2
+make_term_normal # Change termcolor to default colour
+
+PACKS=$(echo "$DBENT" | rev | cut -d "/" -f 1 | rev | \
+                                cut -d "@" -f 2 | cut -d "_" -f 1,2 | sort -u)
+
+echo
+echo "List of detected vulnerable packages:"
+
+for packid in $PACKS
+do
+
+	RESULT=$(redis-cli --raw -n 12 exists "$packid")
+        if [ "$RESULT" -eq 1 ]
+        then
+        	echo "Package name :"
+                echo "$packid"
+                echo "Severity of CVEs :"
+                redis-cli --raw -n 12 smembers "$packid"
+                echo
+        fi
+done
+
+
+FORMATEND=$(date +%s%N)
+
+FINISH=$(date +%s%N)
+
+echo "Download time : $(( ($TRANSFER - $START)/1000000 )) ms"
+echo "Processing time : $(( ($FINISH - $TRANSFER)/1000000 )) ms"
+
+#echo "Hash time : $(( ($HASHEND - $HASHSTART)/1000000 )) ms"
+#echo "Quote time : $(( ($QUOTEEND - $QUOTESTART)/1000000 )) ms"
+#echo "Format time : $(( ($FORMATEND - $FORMATSTART)/1000000 )) ms"
+
+echo "Total time : $(( ($FINISH - $START)/1000000 )) ms"
