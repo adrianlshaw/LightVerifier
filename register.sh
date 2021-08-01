@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -x
 # (c) Copyright 2016-2017 Hewlett Packard Enterprise Development LP
 #
 # This program is free software: you can redistribute it and/or modify it under
@@ -15,6 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Authors:	Adrian L. Shaw <adrianlshaw@acm.org>
+
+extend_pcr(){
+        echo -n "$1$2" | xxd -r -p | sha1sum | tr -d '-'
+}
+
 
 if [ $# -lt 3 ]
 then
@@ -36,8 +41,8 @@ HOSTNAME=$(hostname)
 # Redis database number
 REDIS_DB_NUM=15
 TEMPDIR=$(mktemp -d)
-
-REFLOG=$(head --lines 1 /sys/kernel/security/ima/ascii_runtime_measurements | base64)
+LOG=$(head --lines 1 /sys/kernel/security/ima/ascii_runtime_measurements)
+REFLOG=$(echo $LOG | base64)
 if [[ -z "$REFLOG" ]]
 then
 	echo $REFLOG
@@ -46,7 +51,16 @@ then
 	exit 1
 fi
 
-TPM_ERROR=$(tpm_getpcrhash $AIKUUID $TEMPDIR/aik.pcrhash $TEMPDIR/aik.pcrval 10 2>&1 | grep Error)
+if [ -n "$TPM2" ];
+then
+	PCRHASH=$(echo $LOG | cut -d ' ' -f2)
+	RESULT=$(extend_pcr 0000000000000000000000000000000000000000 $PCRHASH)
+	echo $RESULT
+	TPM_ERROR=$(echo $RESULT > $TEMPDIR/aik.pcrval)
+else
+	TPM_ERROR=$(tpm_getpcrhash $AIKUUID $TEMPDIR/aik.pcrhash $TEMPDIR/aik.pcrval 10 2>&1 | grep Error)
+fi
+
 
 if [[ -n "$TPM_ERROR" ]]
 then

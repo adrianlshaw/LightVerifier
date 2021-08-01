@@ -12,8 +12,7 @@ This project consists of a client (ra-agent) and server (verifier).
 This project currently only works with TPM 1.2, but 2.0 should be easy to incorporate.
 
 ```bash
-$ apt-get install tpm-quote-tools netcat-traditional tpm-tools redis-tools \
-		libtspi-dev autoconf make gcc
+$ apt-get install netcat-traditional tpm-tools tpm2-tools redis-tools libtspi-dev autoconf make gcc
 ```
 
 Once this depedency is installed on both client and server, 
@@ -71,18 +70,44 @@ slaveof <your_master_ip_or_hostname> 6379
 The current default is Debian. To change this to another distro, change the
 "DISTRO" variable in **downloadDeb.sh** and rerun the **buildstore.sh** script.
 
-### Installing the remote attestation client
+### Installing the remote attestation client (TPM 1.2)
 
 If you haven't already, then enable the TPM in the BIOS of the device
 and then take ownership using **tpm_takeownership**.
 Then proceed to make the Attestation Identity Key (AIK)
-using the following commands from the included tpm-quote-tools package:
+using the following commands:
 
+<table>
+<tr>
+<th>TPM 1.2 systems</th>
+<th>TPM 2.0 systems</th>
+</tr>
+<tr>
+<td>
+<pre>
 ```bash
 $ tpm_mkuuid aik.uuid
 $ tpm_mkaik aik.blob aik.pub
 $ tpm_loadkey aik.blob aik.uuid
 ```
+</pre>
+</td>
+<td>
+```bash
+tpm2_evictcontrol -C o -c 0x81010002 # you may ignore this error
+tpm2_createek -c ek.handle -G rsa -u ek.pub
+tpm2_createak -C ek.handle -G rsa -n ak.name --private=ak.priv --public=ak.pub -f pem -c ak.ctx
+tpm2_evictcontrol -C o -c ak.ctx 0x81010002
+```
+</td>
+</tr>
+</table>
+
+
+### Installing the client for TPM 2.0
+
+pm2_evictcontrol -C o -c ak.ctx 0x81010002
+
 
 Make sure the verifier database has been deployed (see README in measurementDB
   directory) and then run the "register.sh" script on each machine that
